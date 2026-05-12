@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement design system and UI primitive components from `context/feature-specs/01-design-system.md`.
+- Implement editor chrome components from `context/feature-specs/02-editor-chrome.md`.
 
 ## Completed
 
@@ -18,6 +18,11 @@ Update this file whenever the current phase, active feature, or implementation s
   - Installed `lucide-react`.
   - Added shared `cn()` helper in `lib/utils.ts`.
   - Added dark-only Ghost AI theme tokens and Tailwind mappings in `app/globals.css`.
+  - Verified lint and production build.
+- Editor chrome:
+  - Added reusable editor navbar in `components/editor/editor-navbar.tsx`.
+  - Added floating project sidebar shell in `components/editor/project-sidebar.tsx`.
+  - Confirmed existing shadcn Dialog primitives support title, description, and footer actions using theme tokens.
   - Verified lint and production build.
 
 ## In Progress
@@ -41,3 +46,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-05-12: Started `01-design-system.md` implementation.
 - 2026-05-12: shadcn initialized with Radix/Lucide setup; requested primitives generated under `components/ui/`.
 - 2026-05-12: `npm.cmd run lint` passed. `npm.cmd run build` passed after allowing network access for `next/font` to fetch Geist metadata. Existing dev server is running at `http://localhost:3000`.
+- 2026-05-12: Started `02-editor-chrome.md` implementation.
+- 2026-05-12: Added editor navbar and floating project sidebar shell. `npm.cmd run lint` passed. `npm.cmd run build` passed after allowing Google Fonts access for `next/font`.
