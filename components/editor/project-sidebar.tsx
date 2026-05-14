@@ -29,14 +29,14 @@ export function ProjectSidebar({
     <aside
       aria-hidden={!isOpen}
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-[calc(100vh-5.5rem)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-2xl border border-surface-border bg-surface/95 p-4 shadow-2xl backdrop-blur transition-transform duration-200 ease-out",
+        "fixed left-0 top-0 z-40 flex h-[calc(100vh-3.5rem)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-2xl border border-surface-border bg-surface/95 p-4 shadow-2xl backdrop-blur transition-transform duration-200 ease-out",
         isOpen
           ? "translate-x-0"
-          : "pointer-events-none -translate-x-full",
+          : "pointer-events-none invisible -translate-x-full",
         className
       )}
     >
-      <div className="h-12 shrink-0 px-4 border-b border-border-default flex items-center justify-between">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-surface-border px-4">
         <span className="text-sm font-semibold text-copy-primary">Projects</span>
         <Button
           type="button"

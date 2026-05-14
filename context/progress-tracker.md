@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement editor chrome components from `context/feature-specs/02-editor-chrome.md`.
+- Select the next feature spec for implementation.
 
 ## Completed
 
@@ -23,6 +23,16 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added reusable editor navbar in `components/editor/editor-navbar.tsx`.
   - Added floating project sidebar shell in `components/editor/project-sidebar.tsx`.
   - Confirmed existing shadcn Dialog primitives support title, description, and footer actions using theme tokens.
+  - Verified lint and production build.
+- Authentication:
+  - Installed `@clerk/ui`.
+  - Wrapped the root layout with `ClerkProvider` using Clerk's dark theme and app CSS variables.
+  - Added sign-in and sign-up routes with minimal two-panel desktop auth layouts and form-only mobile layouts.
+  - Added standard Clerk auth page URL env entries for `/sign-in` and `/sign-up`.
+  - Added root `proxy.ts` route protection with public auth routes and protected-by-default behavior.
+  - Updated `/` to redirect authenticated users to `/editor` and unauthenticated users to `/sign-in`.
+  - Added a minimal protected `/editor` page using the editor layout.
+  - Added Clerk's built-in `UserButton` to the editor navbar.
   - Verified lint and production build.
 
 ## In Progress
@@ -48,3 +58,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-05-12: `npm.cmd run lint` passed. `npm.cmd run build` passed after allowing network access for `next/font` to fetch Geist metadata. Existing dev server is running at `http://localhost:3000`.
 - 2026-05-12: Started `02-editor-chrome.md` implementation.
 - 2026-05-12: Added editor navbar and floating project sidebar shell. `npm.cmd run lint` passed. `npm.cmd run build` passed after allowing Google Fonts access for `next/font`.
+- 2026-05-13: Started `03-auth.md` implementation.
+- 2026-05-13: Completed `03-auth.md` implementation. `npm.cmd run lint` passed. `npm.cmd run build` passed.
+- 2026-05-13: Fixed invalid Tailwind color token usage in the auth shell and project sidebar so theme colors resolve from `globals.css`.
+- 2026-05-13: Fixed Clerk post-auth redirects by forcing sign-in/sign-up success to `/editor` and redirecting already-authenticated auth page requests away from the auth shell.
+- 2026-05-13: Added provider-level Clerk redirect settings and a client auth-page redirect guard so signed-in clients cannot remain on blank auth forms.
+- 2026-05-13: Added proxy-level redirect from public auth routes to `/editor` for already-authenticated requests.
