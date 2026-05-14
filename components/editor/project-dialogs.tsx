@@ -28,6 +28,7 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
     submitCreateProject,
     submitDeleteProject,
     submitRenameProject,
+    handleProjectNameChange,
   } = controls;
 
   const isOpen = dialogState.mode !== null;
@@ -71,7 +72,7 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
               <Input
                 id="project-name"
                 value={projectName}
-                onChange={(event) => setProjectName(event.target.value)}
+                onChange={(event) => handleProjectNameChange(event.target.value)}
                 placeholder="Customer analytics platform"
                 autoFocus
                 required

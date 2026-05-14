@@ -47,6 +47,8 @@ function slugifyProjectName(name: string) {
   const slug = name
     .trim()
     .toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/-+/g, "-")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
@@ -163,6 +165,11 @@ export function useProjectDialogs() {
     closeDialog();
   }
 
+  function handleProjectNameChange(value: string) {
+  const cleaned = value.replace(/[^\w\s-]/g, "");
+  setProjectName(cleaned);
+}
+
   return {
     dialogState,
     isLoading,
@@ -179,5 +186,6 @@ export function useProjectDialogs() {
     submitCreateProject,
     submitDeleteProject,
     submitRenameProject,
+    handleProjectNameChange,
   };
 }
