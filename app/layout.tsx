@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   description: "Collaborative AI system design workspace",
 };
 
+const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
+const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up";
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,8 +38,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ClerkProvider
           appearance={clerkAppearance}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
+          signInUrl={signInUrl}
+          signUpUrl={signUpUrl}
           signInForceRedirectUrl="/editor"
           signUpForceRedirectUrl="/editor"
           signInFallbackRedirectUrl="/editor"
