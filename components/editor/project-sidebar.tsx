@@ -36,7 +36,7 @@ export function ProjectSidebar({
         className
       )}
     >
-      <div className="h-12 shrink-0 px-4 border-b border-border-default flex items-center justify-between">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-surface-border px-4">
         <span className="text-sm font-semibold text-copy-primary">Projects</span>
         <Button
           type="button"
