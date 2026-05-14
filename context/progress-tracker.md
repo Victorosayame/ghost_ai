@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Foundation implementation
+- Feature 05 (TBD)
 
 ## Current Goal
 
-- Select the next feature spec for implementation.
+- To be determined for feature 05.
 
 ## Completed
 
@@ -34,6 +34,13 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added a minimal protected `/editor` page using the editor layout.
   - Added Clerk's built-in `UserButton` to the editor navbar.
   - Verified lint and production build.
+- Project dialogs and editor home:
+  - Added the `/editor` empty-home content with the specified heading, description, and `New Project` button.
+  - Added a dedicated `useProjectDialogs()` hook for mock project data, dialog state, form state, slug preview, and loading state.
+  - Added create, rename, and delete project dialogs wired to mock project mutations only.
+  - Added owned-project rename/delete sidebar actions and hid actions for shared collaborator projects.
+  - Added mobile sidebar backdrop scrim that closes the sidebar when tapped.
+  - Verified lint and production build.
 
 ## In Progress
 
@@ -41,7 +48,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Select the next feature spec for implementation.
+- Feature 05.
 
 ## Open Questions
 
@@ -53,6 +60,8 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-05-14: Started `04-project-dialogs.md` implementation.
+- 2026-05-14: Completed `04-project-dialogs.md` implementation. `npm.cmd run lint` passed. `npm.cmd run build` passed.
 - 2026-05-12: Started `01-design-system.md` implementation.
 - 2026-05-12: shadcn initialized with Radix/Lucide setup; requested primitives generated under `components/ui/`.
 - 2026-05-12: `npm.cmd run lint` passed. `npm.cmd run build` passed after allowing network access for `next/font` to fetch Geist metadata. Existing dev server is running at `http://localhost:3000`.
