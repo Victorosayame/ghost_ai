@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 05 (TBD)
+- Feature 05 (Prisma Schema And Data Layer)
 
 ## Current Goal
 
-- To be determined for feature 05.
+- Add project/collaborator Prisma models, create the Prisma client singleton, run the first migration, and verify the build.
 
 ## Completed
 
@@ -41,6 +41,14 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added owned-project rename/delete sidebar actions and hid actions for shared collaborator projects.
   - Added mobile sidebar backdrop scrim that closes the sidebar when tapped.
   - Verified lint and production build.
+- Prisma schema and data layer:
+  - Added `ProjectStatus`, `Project`, and `ProjectCollaborator` schema definitions with required relations, cascade delete, unique constraints, timestamps, and indexes.
+  - Added the initial `init_projects` Prisma migration.
+  - Generated the Prisma Client output under `app/generated/prisma`.
+  - Added `lib/prisma.ts` with a cached Prisma singleton that uses Accelerate for `prisma+postgres://` URLs and `@prisma/adapter-pg` for direct PostgreSQL URLs.
+  - Updated Prisma config to load `.env.local` after `.env` so local migration commands can use the app's configured database URL.
+  - Applied the migration to the configured database.
+  - Verified Prisma validate, Prisma generate, migration status, lint, and production build.
 
 ## In Progress
 
@@ -48,7 +56,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 05.
+- Feature 06.
 
 ## Open Questions
 
@@ -56,10 +64,12 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Architecture Decisions
 
-- Add decisions that affect the system design or data model.
+- Prisma CLI config loads `.env.local` after `.env` for local development because the app's active `DATABASE_URL` is stored in `.env.local`.
 
 ## Session Notes
 
+- 2026-05-16: Started `05-prisma.md` implementation.
+- 2026-05-16: Completed `05-prisma.md` implementation. Prisma migration `20260516104100_init_projects` applied successfully. `prisma validate`, `prisma generate`, `prisma migrate status`, `npm.cmd run lint`, and `npm.cmd run build` passed.
 - 2026-05-14: Started `04-project-dialogs.md` implementation.
 - 2026-05-14: Completed `04-project-dialogs.md` implementation. `npm.cmd run lint` passed. `npm.cmd run build` passed.
 - 2026-05-12: Started `01-design-system.md` implementation.
