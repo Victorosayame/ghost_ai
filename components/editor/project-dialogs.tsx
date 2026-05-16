@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type { useProjectActions } from "@/hooks/use-project-actions";
+import { useProjectActions } from "@/hooks/use-project-actions";
 
 interface ProjectDialogsProps {
   controls: ReturnType<typeof useProjectActions>;
