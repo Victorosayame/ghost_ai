@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 05 (Prisma Schema And Data Layer)
+- Feature 07 (Wire Editor Home)
 
 ## Current Goal
 
-- Add project/collaborator Prisma models, create the Prisma client singleton, run the first migration, and verify the build.
+- Feature 07 is complete; ready for the next feature spec.
 
 ## Completed
 
@@ -49,6 +49,23 @@ Update this file whenever the current phase, active feature, or implementation s
   - Updated Prisma config to load `.env.local` after `.env` so local migration commands can use the app's configured database URL.
   - Applied the migration to the configured database.
   - Verified Prisma validate, Prisma generate, migration status, lint, and production build.
+- Project API routes:
+  - Added `GET /api/projects` for listing the authenticated user's owned projects.
+  - Added `POST /api/projects` for creating projects with the Clerk user ID as `ownerId` and `Untitled Project` as the missing/blank-name fallback.
+  - Added `PATCH /api/projects/[projectId]` for owner-only project renames.
+  - Added `DELETE /api/projects/[projectId]` for owner-only project deletion.
+  - Added shared project route input parsing and response helpers.
+  - Allowed `/api/projects` requests through Clerk proxy protection so route handlers can return explicit `401` and `403` JSON responses.
+  - Verified lint and production build.
+- Editor home API wiring:
+  - Updated `/editor` to fetch owned and shared projects server-side and pass serialized project summaries into the editor shell.
+  - Added `hooks/use-project-actions.ts` for create, rename, and delete dialog state plus project API mutations.
+  - Replaced mock project dialog/sidebar state with real server-provided project lists.
+  - Added slug-and-suffix room ID preview for project creation and submitted that ID to `POST /api/projects`.
+  - Updated project creation so the database project ID can align with the future Liveblocks room ID.
+  - Added sidebar project navigation to `/editor/[projectId]`.
+  - Added a minimal protected `/editor/[projectId]` workspace route for created/opened projects.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
 
 ## In Progress
 
@@ -56,7 +73,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Feature 06.
+- Next feature spec.
 
 ## Open Questions
 
@@ -65,9 +82,14 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Architecture Decisions
 
 - Prisma CLI config loads `.env.local` after `.env` for local development because the app's active `DATABASE_URL` is stored in `.env.local`.
+- Feature 07 extends project creation to accept a validated slug-style project ID from the client so project IDs and future Liveblocks room IDs can remain the same identifier.
 
 ## Session Notes
 
+- 2026-05-16: Started `07-wire-editor-home.md` implementation.
+- 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
+- 2026-05-16: Started `06-project-apis.md` implementation. Added explicit project API route auth checks so unauthenticated project API requests can return `401` from the handlers.
+- 2026-05-16: Completed `06-project-apis.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `05-prisma.md` implementation.
 - 2026-05-16: Completed `05-prisma.md` implementation. Prisma migration `20260516104100_init_projects` applied successfully. `prisma validate`, `prisma generate`, `prisma migrate status`, `npm.cmd run lint`, and `npm.cmd run build` passed.
 - 2026-05-14: Started `04-project-dialogs.md` implementation.
