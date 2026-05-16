@@ -12,7 +12,7 @@ datasource db {
   provider = "postgresql"
 }
 
-enum ProjectStatus {
-  DRAFT
-  ARCHIVED
-}
+// enum ProjectStatus {
+//   DRAFT
+//   ARCHIVED
+// }

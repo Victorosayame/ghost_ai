@@ -5,18 +5,18 @@ import { useState } from "react";
 
 import { EditorNavbar } from "@/components/editor/editor-navbar";
 import { ProjectSidebar } from "@/components/editor/project-sidebar";
-import type { MockProject } from "@/components/editor/use-project-dialogs";
+import type { EditorProject } from "@/components/editor/project-types";
 import { cn } from "@/lib/utils";
 
 interface EditorLayoutProps {
   children: ReactNode;
   className?: string;
   navbarCenterContent?: ReactNode;
-  ownedProjects: MockProject[];
-  sharedProjects: MockProject[];
+  ownedProjects: EditorProject[];
+  sharedProjects: EditorProject[];
   onCreateProject: () => void;
-  onRenameProject: (project: MockProject) => void;
-  onDeleteProject: (project: MockProject) => void;
+  onRenameProject: (project: EditorProject) => void;
+  onDeleteProject: (project: EditorProject) => void;
 }
 
 export function EditorLayout({

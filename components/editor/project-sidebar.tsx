@@ -1,21 +1,22 @@
 "use client";
 
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import type { MockProject } from "@/components/editor/use-project-dialogs";
+import type { EditorProject } from "@/components/editor/project-types";
 import { useState } from "react";
 
 interface ProjectSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  ownedProjects: MockProject[];
-  sharedProjects: MockProject[];
+  ownedProjects: EditorProject[];
+  sharedProjects: EditorProject[];
   onCreateProject: () => void;
-  onRenameProject: (project: MockProject) => void;
-  onDeleteProject: (project: MockProject) => void;
+  onRenameProject: (project: EditorProject) => void;
+  onDeleteProject: (project: EditorProject) => void;
   className?: string;
 }
 
@@ -33,12 +34,14 @@ function ProjectList({
   showActions,
   onRenameProject,
   onDeleteProject,
+  onProjectSelect,
 }: {
   emptyLabel: string;
-  projects: MockProject[];
+  projects: EditorProject[];
   showActions: boolean;
-  onRenameProject: (project: MockProject) => void;
-  onDeleteProject: (project: MockProject) => void;
+  onRenameProject: (project: EditorProject) => void;
+  onDeleteProject: (project: EditorProject) => void;
+  onProjectSelect: () => void;
 }) {
   if (projects.length === 0) {
     return <EmptyProjectsState label={emptyLabel} />;
@@ -51,17 +54,21 @@ function ProjectList({
           key={project.id}
           className="group flex min-h-16 items-center gap-3 rounded-2xl border border-surface-border bg-base/40 px-3 py-2"
         >
-          <div className="min-w-0 flex-1">
+          <Link
+            href={`/editor/${project.id}`}
+            onClick={onProjectSelect}
+            className="min-w-0 flex-1 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+          >
             <p className="truncate text-sm font-medium text-copy-primary">
               {project.name}
             </p>
             <p className="truncate font-mono text-xs text-copy-muted">
-              {project.slug}
+              {project.id}
             </p>
             <p className="mt-1 text-xs text-copy-faint">
               {project.updatedAtLabel}
             </p>
-          </div>
+          </Link>
 
           {showActions && (
             <div className="flex shrink-0 items-center gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
@@ -181,6 +188,7 @@ export function ProjectSidebar({
                 showActions
                 onRenameProject={onRenameProject}
                 onDeleteProject={onDeleteProject}
+                onProjectSelect={onClose}
               />
             </TabsContent>
             <TabsContent value="shared" className="mt-4 overflow-y-auto">
@@ -190,6 +198,7 @@ export function ProjectSidebar({
                 showActions={false}
                 onRenameProject={onRenameProject}
                 onDeleteProject={onDeleteProject}
+                onProjectSelect={onClose}
               />
             </TabsContent>
           </Tabs>

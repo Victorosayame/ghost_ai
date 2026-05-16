@@ -11,15 +11,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type { useProjectDialogs } from "@/components/editor/use-project-dialogs";
+import { useProjectActions } from "@/hooks/use-project-actions";
 
 interface ProjectDialogsProps {
-  controls: ReturnType<typeof useProjectDialogs>;
+  controls: ReturnType<typeof useProjectActions>;
 }
 
 export function ProjectDialogs({ controls }: ProjectDialogsProps) {
   const {
     dialogState,
+    errorMessage,
     isLoading,
     projectName,
     slugPreview,
@@ -32,7 +33,8 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
   } = controls;
 
   const isOpen = dialogState.mode !== null;
-  const canSubmit = projectName.trim().length > 0 && !isLoading;
+  const canSubmit =
+    dialogState.mode === "delete" || projectName.trim().length > 0;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,9 +81,12 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
                 className="border-subtle-border bg-base/50 text-copy-primary placeholder:text-copy-faint"
               />
               <p className="text-xs text-copy-muted">
-                Slug preview:{" "}
+                Room ID preview:{" "}
                 <span className="font-mono text-brand">{slugPreview}</span>
               </p>
+              {errorMessage && (
+                <p className="text-xs text-state-error">{errorMessage}</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
@@ -93,7 +98,7 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={!canSubmit}>
+              <Button type="submit" disabled={!canSubmit || isLoading}>
                 {isLoading ? "Creating..." : "Create Project"}
               </Button>
             </div>
@@ -124,10 +129,9 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
                 required
                 className="border-subtle-border bg-base/50 text-copy-primary"
               />
-              <p className="text-xs text-copy-muted">
-                Slug preview:{" "}
-                <span className="font-mono text-brand">{slugPreview}</span>
-              </p>
+              {errorMessage && (
+                <p className="text-xs text-state-error">{errorMessage}</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
@@ -139,7 +143,7 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={!canSubmit}>
+              <Button type="submit" disabled={!canSubmit || isLoading}>
                 {isLoading ? "Renaming..." : "Rename Project"}
               </Button>
             </div>
@@ -151,10 +155,13 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
             <DialogHeader>
               <DialogTitle className="text-lg">Delete Project</DialogTitle>
               <DialogDescription className="text-copy-muted">
-                This will remove {dialogState.project.name} from the mock project
-                list.
+                This will permanently delete {dialogState.project.name}.
               </DialogDescription>
             </DialogHeader>
+
+            {errorMessage && (
+              <p className="text-sm text-state-error">{errorMessage}</p>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button
@@ -165,7 +172,11 @@ export function ProjectDialogs({ controls }: ProjectDialogsProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="destructive" disabled={isLoading}>
+              <Button
+                type="submit"
+                variant="destructive"
+                disabled={!canSubmit || isLoading}
+              >
                 {isLoading ? "Deleting..." : "Delete Project"}
               </Button>
             </div>

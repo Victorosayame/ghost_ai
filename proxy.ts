@@ -23,6 +23,8 @@ const isPublicRoute = createRouteMatcher([
   `${signUpPath}(.*)`,
 ]);
 
+const isProjectApiRoute = createRouteMatcher(["/api/projects", "/api/projects(.*)"]);
+
 const proxy = clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) {
     const { isAuthenticated } = await auth();
@@ -31,6 +33,10 @@ const proxy = clerkMiddleware(async (auth, request) => {
       return NextResponse.redirect(new URL("/editor", request.url));
     }
 
+    return NextResponse.next();
+  }
+
+  if (isProjectApiRoute(request)) {
     return NextResponse.next();
   }
 
