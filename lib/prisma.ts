@@ -4,13 +4,14 @@ import {
   PrismaClient,
   type PrismaClient as PrismaClientType,
 } from "@/app/generated/prisma/client";
+import { normalizeDatabaseUrl } from "@/lib/database-url";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClientType;
 };
 
 function createPrismaClient(): PrismaClientType {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = normalizeDatabaseUrl(process.env.DATABASE_URL);
 
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required to initialize Prisma.");

@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 07 (Wire Editor Home)
+- Feature 09: Share dialog
 
 ## Current Goal
 
-- Feature 07 is complete; ready for the next feature spec.
+- Share dialog implementation is complete; ready for the next feature spec.
 
 ## Completed
 
@@ -66,6 +66,25 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added sidebar project navigation to `/editor/[projectId]`.
   - Added a minimal protected `/editor/[projectId]` workspace route for created/opened projects.
   - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Editor workspace shell:
+  - Added reusable project access helpers for Clerk identity lookup and owner/collaborator access checks.
+  - Added the `AccessDenied` editor state for missing or unauthorized projects.
+  - Added workspace shell UI with project-aware navbar, share action placeholder, AI sidebar toggle, canvas placeholder, and right AI sidebar placeholder.
+  - Added current project highlighting in the project sidebar.
+  - Renamed the dynamic workspace route segment to `/editor/[roomId]` while preserving the same `/editor/:id` URL shape.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Prisma PostgreSQL SSL warning fix:
+  - Added shared database URL normalization for direct PostgreSQL connections.
+  - Rewrites deprecated strict SSL modes (`prefer`, `require`, `verify-ca`) to explicit `sslmode=verify-full`.
+  - Applied the normalization to both runtime Prisma adapter setup and Prisma CLI config.
+  - Verified `npm.cmd run lint`, `npm.cmd run build`, and `npm.cmd exec prisma validate`.
+- Share dialog:
+  - Added collaborator listing, inviting, and removal API routes under the project API boundary.
+  - Added server-side owner enforcement for invite and remove actions.
+  - Added Clerk Backend API enrichment for collaborator display names and avatar images with email-only fallback.
+  - Wired the workspace Share button to an owner-capable/read-only share dialog.
+  - Added owner-only project link copying with temporary `Copied!` feedback.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
 
 ## In Progress
 
@@ -86,8 +105,14 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- 2026-05-16: Started PostgreSQL SSL warning fix from `current-issues/current-issue.md`. Added `normalizeDatabaseUrl()` to preserve the current strict TLS behavior by rewriting deprecated strict direct Postgres SSL modes to `sslmode=verify-full` for app and Prisma CLI connections.
+- 2026-05-16: Completed PostgreSQL SSL warning fix. `npm.cmd run lint`, `npm.cmd run build`, and `npm.cmd exec prisma validate` passed.
+- 2026-05-17: Started `09-share-dialog.md` implementation. Added project collaborator APIs, Clerk user enrichment, and workspace share dialog wiring.
+- 2026-05-17: Completed `09-share-dialog.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `07-wire-editor-home.md` implementation.
 - 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
+- 2026-05-16: Started `08-editor-workspace-shell.md` implementation. Added server-side access helpers, AccessDenied UI, active project sidebar highlighting, and placeholder workspace shell.
+- 2026-05-16: Completed `08-editor-workspace-shell.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `06-project-apis.md` implementation. Added explicit project API route auth checks so unauthenticated project API requests can return `401` from the handlers.
 - 2026-05-16: Completed `06-project-apis.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `05-prisma.md` implementation.

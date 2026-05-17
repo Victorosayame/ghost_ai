@@ -12,6 +12,7 @@ import { useState } from "react";
 interface ProjectSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  activeProjectId?: string;
   ownedProjects: EditorProject[];
   sharedProjects: EditorProject[];
   onCreateProject: () => void;
@@ -32,6 +33,7 @@ function ProjectList({
   emptyLabel,
   projects,
   showActions,
+  activeProjectId,
   onRenameProject,
   onDeleteProject,
   onProjectSelect,
@@ -39,6 +41,7 @@ function ProjectList({
   emptyLabel: string;
   projects: EditorProject[];
   showActions: boolean;
+  activeProjectId?: string;
   onRenameProject: (project: EditorProject) => void;
   onDeleteProject: (project: EditorProject) => void;
   onProjectSelect: () => void;
@@ -49,10 +52,18 @@ function ProjectList({
 
   return (
     <div className="grid gap-2">
-      {projects.map((project) => (
+      {projects.map((project) => {
+        const isActive = project.id === activeProjectId;
+
+        return (
         <div
           key={project.id}
-          className="group flex min-h-16 items-center gap-3 rounded-2xl border border-surface-border bg-base/40 px-3 py-2"
+          className={cn(
+            "group flex min-h-16 items-center gap-3 rounded-2xl border px-3 py-2 transition-colors",
+            isActive
+              ? "border-brand/60 bg-accent-dim"
+              : "border-surface-border bg-base/40"
+          )}
         >
           <Link
             href={`/editor/${project.id}`}
@@ -95,7 +106,8 @@ function ProjectList({
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -103,6 +115,7 @@ function ProjectList({
 export function ProjectSidebar({
   isOpen,
   onClose,
+  activeProjectId,
   ownedProjects,
   sharedProjects,
   onCreateProject,
@@ -186,6 +199,7 @@ export function ProjectSidebar({
                 emptyLabel="No projects yet."
                 projects={ownedProjects}
                 showActions
+                activeProjectId={activeProjectId}
                 onRenameProject={onRenameProject}
                 onDeleteProject={onDeleteProject}
                 onProjectSelect={onClose}
@@ -196,6 +210,7 @@ export function ProjectSidebar({
                 emptyLabel="No shared projects yet."
                 projects={sharedProjects}
                 showActions={false}
+                activeProjectId={activeProjectId}
                 onRenameProject={onRenameProject}
                 onDeleteProject={onDeleteProject}
                 onProjectSelect={onClose}

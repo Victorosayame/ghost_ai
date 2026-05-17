@@ -12,6 +12,7 @@ interface EditorNavbarProps {
   onToggleSidebar: () => void;
   className?: string;
   centerContent?: ReactNode;
+  actions?: ReactNode;
 }
 
 export function EditorNavbar({
@@ -19,6 +20,7 @@ export function EditorNavbar({
   onToggleSidebar,
   className,
   centerContent,
+  actions,
 }: EditorNavbarProps) {
   const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen;
 
@@ -47,7 +49,8 @@ export function EditorNavbar({
         {centerContent}
       </div>
 
-      <div className="flex min-w-0 items-center justify-end">
+      <div className="flex min-w-0 items-center justify-end gap-2">
+        {actions}
         <UserButton userProfileMode="modal" />
       </div>
     </header>
