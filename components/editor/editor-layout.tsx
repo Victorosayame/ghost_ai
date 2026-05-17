@@ -11,7 +11,9 @@ import { cn } from "@/lib/utils";
 interface EditorLayoutProps {
   children: ReactNode;
   className?: string;
+  activeProjectId?: string;
   navbarCenterContent?: ReactNode;
+  navbarActions?: ReactNode;
   ownedProjects: EditorProject[];
   sharedProjects: EditorProject[];
   onCreateProject: () => void;
@@ -22,7 +24,9 @@ interface EditorLayoutProps {
 export function EditorLayout({
   children,
   className,
+  activeProjectId,
   navbarCenterContent,
+  navbarActions,
   ownedProjects,
   sharedProjects,
   onCreateProject,
@@ -42,10 +46,12 @@ export function EditorLayout({
         isSidebarOpen={isProjectSidebarOpen}
         onToggleSidebar={() => setIsProjectSidebarOpen((isOpen) => !isOpen)}
         centerContent={navbarCenterContent}
+        actions={navbarActions}
       />
       <ProjectSidebar
         isOpen={isProjectSidebarOpen}
         onClose={() => setIsProjectSidebarOpen(false)}
+        activeProjectId={activeProjectId}
         ownedProjects={ownedProjects}
         sharedProjects={sharedProjects}
         onCreateProject={onCreateProject}

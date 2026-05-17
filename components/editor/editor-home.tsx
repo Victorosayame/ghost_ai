@@ -13,6 +13,7 @@ interface EditorHomeProps {
   activeProjectId?: string;
   children?: ReactNode;
   navbarCenterContent?: string;
+  navbarActions?: ReactNode;
   ownedProjects: EditorProject[];
   sharedProjects: EditorProject[];
 }
@@ -21,6 +22,7 @@ export function EditorHome({
   activeProjectId,
   children,
   navbarCenterContent = "Untitled architecture",
+  navbarActions,
   ownedProjects,
   sharedProjects,
 }: EditorHomeProps) {
@@ -28,7 +30,9 @@ export function EditorHome({
 
   return (
     <EditorLayout
+      activeProjectId={activeProjectId}
       navbarCenterContent={navbarCenterContent}
+      navbarActions={navbarActions}
       ownedProjects={ownedProjects}
       sharedProjects={sharedProjects}
       onCreateProject={projectDialogControls.openCreateDialog}
