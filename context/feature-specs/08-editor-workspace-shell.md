@@ -1,4 +1,4 @@
-Build the `/editor/[roomId]`, in this case i tink we already have `/editor/[projectId]` workspace shell with server-side access checks. No canvas logic yet.
+Build the `/editor/[roomId]`, we already have `/editor/[projectId]` workspace shell with server-side access checks. No canvas logic yet.
 
 ## Access
 

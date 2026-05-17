@@ -122,8 +122,9 @@ export function ShareDialog({
 
   async function inviteCollaborator(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!isOwner || !email.trim()) {
+     
+     const normalizedEmail = email.trim();
+    if (!isOwner || !normalizedEmail) {
       return;
     }
 
@@ -134,7 +135,7 @@ export function ShareDialog({
       const response = await fetch(`/api/projects/${projectId}/collaborators`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
 
       if (!response.ok) {
