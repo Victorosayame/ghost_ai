@@ -17,7 +17,9 @@ interface ProjectDialogsProps {
   controls: ReturnType<typeof useProjectActions>;
 }
 
+
 export function ProjectDialogs({ controls }: ProjectDialogsProps) {
+
   const {
     dialogState,
     errorMessage,
