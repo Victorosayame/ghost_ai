@@ -46,6 +46,7 @@ export default async function EditorWorkspacePage({
       sharedProjects={projectLists.sharedProjects.map((sharedProject) =>
         toEditorProject(sharedProject, "collaborator")
       )}
+      roomId={roomId}
     />
   );
 }

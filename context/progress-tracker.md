@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 09: Share dialog
+- Feature 12: Shape panel
 
 ## Current Goal
 
-- Share dialog implementation is complete; ready for the next feature spec.
+- Feature 12 has been implemented and verified.
 
 ## Completed
 
@@ -85,6 +85,46 @@ Update this file whenever the current phase, active feature, or implementation s
   - Wired the workspace Share button to an owner-capable/read-only share dialog.
   - Added owner-only project link copying with temporary `Copied!` feedback.
   - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Liveblocks setup:
+  - Updated `liveblocks.config.ts` with typed `Presence` (cursor position, isThinking) and `UserMeta` (id, name, avatar, color).
+  - Created `lib/liveblocks.ts` with cached Liveblocks node client and deterministic `getUserCursorColor()` helper.
+  - Created `POST /api/liveblocks-auth/[projectId]` route that requires Clerk authentication, verifies project access, ensures Liveblocks room exists, and returns session token with user metadata.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Base canvas:
+  - Expanded `types/canvas.ts` to define shared `NODE_COLORS` and `NODE_SHAPES` constants plus typed `NodeData`, `CanvasNode`, and `CanvasEdge`.
+  - Updated `liveblocks.config.ts` storage typing to use `LiveblocksFlow<CanvasNode, CanvasEdge>` instead of `any`.
+  - Updated `EditorCanvasWrapper` to accept the server-provided room ID, keep the workspace page server-side, seed the required Liveblocks flow storage, and use themed Liveblocks loading/error fallbacks through a local error boundary.
+  - Updated `ReactFlowCanvas` to use typed `useLiveblocksFlow` initial nodes/edges, `ConnectionMode.Loose`, `MiniMap`, and a dot-pattern React Flow background without controls.
+  - Replaced workspace canvas placeholder with `EditorCanvasWrapper`.
+  - Tightened canvas node and edge data typing so the shared React Flow types satisfy the current Liveblocks and React Flow constraints.
+  - Verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+  - Removed the obsolete `components/editor/editor-layout.tsx` after confirming it was no longer used outside a stale workspace shell import.
+  - Simplified `EditorWorkspaceShell` to render the verified base-canvas flow through `EditorCanvasWrapper` instead of the incomplete alternate room/template wiring.
+  - Removed the unused `components/canvas/canvas-room.tsx` stub after it surfaced as the remaining production type-check blocker.
+  - Cleaned related editor token drift so sidebar, home, and AI shell styling matches the documented theme utilities.
+  - Re-verified `npm.cmd run lint` and `npm.cmd run build`.
+  - Updated the workspace shell so project rooms start with the left project sidebar closed instead of reopening the overlay after navigation.
+  - Added an explicit empty-canvas overlay in `ReactFlowCanvas` so a successfully connected but still-empty Liveblocks room no longer looks blank.
+  - Repositioned the base-canvas `MiniMap` to the bottom-left so it remains visible alongside the right AI sidebar overlay, and clarified in the empty state that `fitView` only has an effect once nodes exist.
+  - Hardened the React Flow mount by wrapping the canvas in `ReactFlowProvider`, giving the viewport explicit full-size dimensions, and raising the empty-state overlay above internal canvas layers so empty rooms render visibly.
+  - Rebuilt the Feature 11 implementation from the spec by simplifying `EditorCanvasWrapper` back to the required Liveblocks room setup and simplifying `ReactFlowCanvas` to the requested `useLiveblocksFlow` + `ReactFlow` foundation.
+  - Kept the workspace page server-side while preserving typed Liveblocks storage and React Flow synchronization.
+  - Updated the AI sidebar shell so it consistently renders as a visible right-side slide-over panel when toggled open.
+  - Converted the AI sidebar from a viewport-fixed overlay into a true right-side workspace panel so it now occupies the right edge of the editor layout beside the canvas.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+  - Fixed React Flow full-height sizing by restoring an unbroken `h-full`/flex/min-height chain from the root layout through the workspace shell into the canvas wrapper, and removed the temporary fixed `800x800` canvas sizing from `ReactFlowCanvas`.
+- Shape panel:
+  - Added shared shape drag payload typing and a dedicated drag MIME type in `types/canvas.ts`.
+  - Added a floating bottom-center shape toolbar with draggable buttons for rectangle, diamond, circle, pill, cylinder, and hexagon.
+  - Added React Flow drag-over and drop handling that parses the dragged shape payload, converts screen coordinates into flow coordinates, and creates new `canvasNode` entries in Liveblocks storage using default size, empty label, default color, and generated IDs.
+  - Added a temporary custom `canvasNode` renderer so dropped nodes are visible immediately as centered bordered blocks regardless of shape-specific visuals.
+  - Fixed the drag-and-drop pipeline by writing the shape payload to both the custom Ghost MIME type and `text/plain`, then loosening the canvas `dragover` gate to recognize dragged shape types before the browser exposes payload data.
+  - Kept node placement aligned with the cursor by continuing to use React Flow's `screenToFlowPosition()` conversion and centering the dropped shape around the pointer.
+  - Removed the AI sidebar from the main workspace flex row and converted both sidebars into viewport overlays so the canvas no longer shrinks when panels open.
+  - Refined the workspace chrome so the canvas stays flush with the page background while the sidebars float above it with translucent surfaces and subtle shadows.
+  - Tuned the base canvas presentation by preserving a full-viewport dot grid, removing the heavier minimap shadow treatment, and keeping the drop-state overlay flat instead of card-like.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+  - Verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
 
 ## In Progress
 
@@ -103,12 +143,24 @@ Update this file whenever the current phase, active feature, or implementation s
 - Prisma CLI config loads `.env.local` after `.env` for local development because the app's active `DATABASE_URL` is stored in `.env.local`.
 - Feature 07 extends project creation to accept a validated slug-style project ID from the client so project IDs and future Liveblocks room IDs can remain the same identifier.
 
-## Session Notes
-
+## Session 8: Started `10-liveblocks-setup.md` implementation. Updated `liveblocks.config.ts` with Presence (cursor, isThinking) and UserMeta (id, name, avatar, color). Created `lib/liveblocks.ts` with cached node client and deterministic cursor color mapping. Created `POST /api/liveblocks-auth/[projectId]` with Clerk auth check, project access verification, room creation, and session token gener
 - 2026-05-16: Started PostgreSQL SSL warning fix from `current-issues/current-issue.md`. Added `normalizeDatabaseUrl()` to preserve the current strict TLS behavior by rewriting deprecated strict direct Postgres SSL modes to `sslmode=verify-full` for app and Prisma CLI connections.
 - 2026-05-16: Completed PostgreSQL SSL warning fix. `npm.cmd run lint`, `npm.cmd run build`, and `npm.cmd exec prisma validate` passed.
 - 2026-05-17: Started `09-share-dialog.md` implementation. Added project collaborator APIs, Clerk user enrichment, and workspace share dialog wiring.
 - 2026-05-17: Completed `09-share-dialog.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
+- 2026-05-19: Completed `11-base-canvas.md` verification and implementation. Added required Liveblocks initial storage, replaced unsupported `ClientSideSuspense` error handling with a local error boundary fallback, tightened shared canvas node/edge typing, and verified `npm.cmd run lint` plus `npm.cmd run build` with network access for `next/font`.
+- 2026-05-19: Started Liveblocks auth error fix. Confirmed the canvas auth route was throwing because no Liveblocks server secret was configured in the environment.
+- 2026-05-19: Completed Liveblocks auth error handling fix. Added strict Liveblocks secret resolution with `LIVEBLOCKS_SECRET_KEY` and `LIVEBLOCKS_SECRET` support, returned actionable JSON for configuration failures, and surfaced server error messages in the canvas auth client.
+- 2026-05-19: Fixed Liveblocks token response shape. Updated the auth route to return the raw `identifyUser()` JSON body instead of nesting the SDK auth response wrapper inside a `token` property.
+- 2026-05-19: Fixed Liveblocks room authorization. Replaced identity-only token generation with a prepared session that grants the current project room `FULL_ACCESS` before authorizing the client.
+- 2026-05-19: Fixed base canvas wrapper initialization. Added required Liveblocks `initialStorage.flow` seeding in `EditorCanvasWrapper`, removed unsupported `ClientSideSuspense` `onError` usage, and replaced it with a local client error boundary. Verified with `npm.cmd exec tsc --noEmit`.
+- 2026-05-20: Re-verified `11-base-canvas.md` after recent workspace changes. Removed unused `editor-layout`, restored `EditorWorkspaceShell` to the shipped `EditorCanvasWrapper` path, deleted the dead `components/canvas/canvas-room.tsx` stub, and verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-20: Fixed workspace room UX regressions after base-canvas setup. Rooms now load with the project sidebar closed, and empty Liveblocks rooms show a visible ready-state overlay instead of appearing blank. Verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-21: Adjusted base-canvas viewport UX. Moved the `MiniMap` away from the right overlay so it is visible during empty-room states, and documented in the canvas empty state that `fitView` remains inactive until nodes are present. Verified `npm.cmd run lint`.
+- 2026-05-21: Strengthened the base-canvas mount. Added `ReactFlowProvider`, explicit full-size React Flow sizing, and a higher-priority empty overlay so empty connected rooms render visible canvas UI instead of appearing blank. Verified `npm.cmd run lint`.
+- 2026-05-21: Reimplemented `11-base-canvas.md` cleanly from the spec. Reset the canvas wrapper and React Flow surface to the required Liveblocks-backed base foundation, retained typed room storage, and fixed the AI sidebar to display as a right-side panel when open. Verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-21: Updated the editor workspace layout so the AI sidebar is a real right-side panel within the main workspace flex layout instead of a fixed overlay. Verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-24: Completed `12-shape-panel.md` implementation. Added the bottom drag-to-create shape toolbar, Liveblocks-backed drop node creation, and a temporary custom `canvasNode` renderer. Verified `npm.cmd run lint` and `npm.cmd run build`.
 - 2026-05-16: Started `07-wire-editor-home.md` implementation.
 - 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `08-editor-workspace-shell.md` implementation. Added server-side access helpers, AccessDenied UI, active project sidebar highlighting, and placeholder workspace shell.

@@ -23,7 +23,7 @@ interface ProjectSidebarProps {
 
 function EmptyProjectsState({ label }: { label: string }) {
   return (
-    <div className="flex min-h-44 items-center justify-center rounded-2xl border border-dashed border-subtle-border bg-base/40 px-6 text-center">
+    <div className="flex min-h-24 items-center justify-center rounded-2xl border border-dashed border-subtle-border bg-base/40 px-6 text-center">
       <p className="text-sm text-copy-muted">{label}</p>
     </div>
   );
@@ -139,10 +139,10 @@ export function ProjectSidebar({
       <aside
         aria-hidden={!isOpen}
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-[calc(100vh-3.5rem)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-2xl border border-surface-border bg-surface/95 p-4 shadow-2xl backdrop-blur transition-transform duration-200 ease-out",
+          "fixed left-4 top-16 z-40 flex h-[calc(100vh-4.5rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface/92 shadow-xl backdrop-blur-md transition-transform duration-200 ease-out",
           isOpen
             ? "translate-x-0"
-            : "pointer-events-none invisible -translate-x-full",
+            : "pointer-events-none invisible -translate-x-[calc(100%+1rem)]",
           className,
         )}
       >
