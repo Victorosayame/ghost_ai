@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { LayoutTemplate } from "lucide-react";
 
 import { EditorCanvasWrapper } from "@/components/editor/editor-canvas-wrapper";
 import { ProjectDialogs } from "@/components/editor/project-dialogs";
 import type { EditorProject } from "@/components/editor/project-types";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { useProjectActions } from "@/hooks/use-project-actions";
+import { Button } from "@/components/ui/button";
 import { EditorNavbar } from "./editor-navbar";
 import { ProjectSidebar } from "./project-sidebar";
 import AiSidebar from "./ai-sidebar";
@@ -27,6 +29,7 @@ export function EditorWorkspaceShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [starterTemplatesOpen, setStarterTemplatesOpen] = useState(false);
   const actions = useProjectActions({
     activeProjectId: project.id,
   });
@@ -42,11 +45,27 @@ export function EditorWorkspaceShell({
           setAiSidebarOpen((previousState) => !previousState)
         }
         onOpenShareDialog={() => setShareDialogOpen(true)}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setStarterTemplatesOpen(true)}
+          >
+            <LayoutTemplate className="h-4 w-4" />
+            Templates
+          </Button>
+        }
       />
 
       <main className="flex flex-1 overflow-hidden">
         <div className="relative z-0 flex flex-1 items-stretch overflow-hidden">
-          <EditorCanvasWrapper roomId={roomId} />
+          <EditorCanvasWrapper
+            roomId={roomId}
+            isStarterTemplatesOpen={starterTemplatesOpen}
+            onStarterTemplatesOpenChange={setStarterTemplatesOpen}
+          />
         </div>
 
         {aiSidebarOpen && (

@@ -1,4 +1,4 @@
-import type { Node, Edge } from "@xyflow/react"
+import { MarkerType, type Edge, type Node } from "@xyflow/react"
 
 export const NODE_SHAPES = [
   "rectangle",
@@ -33,6 +33,15 @@ export const SHAPE_DEFAULTS: Record<NodeShape, { width: number; height: number }
   hexagon: { width: 140, height: 120 },
 }
 
+export const SHAPE_MIN_DIMENSIONS: Record<NodeShape, { width: number; height: number }> = {
+  rectangle: { width: 96, height: 56 },
+  diamond: { width: 96, height: 72 },
+  circle: { width: 72, height: 72 },
+  pill: { width: 104, height: 52 },
+  cylinder: { width: 88, height: 72 },
+  hexagon: { width: 96, height: 72 },
+}
+
 export interface ShapeDragPayload {
   height: number
   shape: NodeShape
@@ -54,5 +63,16 @@ export interface CanvasEdgeData extends Record<string, unknown> {
   label?: string
 }
 
+export const CANVAS_EDGE_TYPE = "canvasEdge" as const
+
+export const DEFAULT_CANVAS_EDGE_LABEL = ""
+
+export const DEFAULT_CANVAS_EDGE_MARKER = {
+  type: MarkerType.ArrowClosed,
+  color: "rgba(237, 237, 237, 0.45)",
+  width: 16,
+  height: 16,
+} as const
+
 export type CanvasNode = Node<CanvasNodeData, "canvasNode">
-export type CanvasEdge = Edge<CanvasEdgeData, "canvasEdge">
+export type CanvasEdge = Edge<CanvasEdgeData, typeof CANVAS_EDGE_TYPE>
