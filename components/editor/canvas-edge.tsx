@@ -141,11 +141,18 @@ export function CanvasEdgeComponent({
   }
 
   function handleInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter" || event.key === "Escape") {
+    if (event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
       commitDraft();
       return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      setDraftLabel(data?.label ?? "");
+      closeEditing();
     }
   }
 
