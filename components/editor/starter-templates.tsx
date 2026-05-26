@@ -1,6 +1,11 @@
-import { MarkerType } from "@xyflow/react"
 import type { CanvasNode, CanvasEdge, NodeShape } from "@/types/canvas"
-import { NODE_COLORS, SHAPE_DEFAULTS } from "@/types/canvas"
+import {
+  CANVAS_EDGE_TYPE,
+  DEFAULT_CANVAS_EDGE_LABEL,
+  DEFAULT_CANVAS_EDGE_MARKER,
+  NODE_COLORS,
+  SHAPE_DEFAULTS,
+} from "@/types/canvas"
 
 export interface CanvasTemplate {
   id: string
@@ -8,6 +13,15 @@ export interface CanvasTemplate {
   description: string
   nodes: CanvasNode[]
   edges: CanvasEdge[]
+}
+
+export interface CanvasTemplateBounds {
+  height: number
+  maxX: number
+  maxY: number
+  minX: number
+  minY: number
+  width: number
 }
 
 const C = NODE_COLORS
@@ -33,21 +47,14 @@ function n(
   }
 }
 
-const MARKER_END = {
-  type: MarkerType.ArrowClosed,
-  color: "rgba(255,255,255,0.4)",
-  width: 16,
-  height: 16,
-} as const
-
 function e(id: string, source: string, target: string): CanvasEdge {
   return {
     id,
-    type: "canvasEdge",
+    type: CANVAS_EDGE_TYPE,
     source,
     target,
-    data: { label: "" },
-    markerEnd: MARKER_END,
+    data: { label: DEFAULT_CANVAS_EDGE_LABEL },
+    markerEnd: DEFAULT_CANVAS_EDGE_MARKER,
   }
 }
 
@@ -120,3 +127,66 @@ export const CANVAS_TEMPLATES: CanvasTemplate[] = [
     ],
   },
 ]
+
+export function cloneCanvasTemplate(template: CanvasTemplate): CanvasTemplate {
+  return {
+    ...template,
+    nodes: template.nodes.map((node) => ({
+      ...node,
+      position: { ...node.position },
+      data: { ...node.data },
+    })),
+    edges: template.edges.map((edge) => ({
+      ...edge,
+      data: edge.data ? { ...edge.data } : edge.data,
+      markerEnd: edge.markerEnd,
+    })),
+  }
+}
+
+export function getTemplateBounds(nodes: CanvasNode[]): CanvasTemplateBounds {
+  if (nodes.length === 0) {
+    return {
+      minX: 0,
+      minY: 0,
+      maxX: 1,
+      maxY: 1,
+      width: 1,
+      height: 1,
+    }
+  }
+
+  const [firstNode, ...restNodes] = nodes
+  const firstShape = firstNode.data.shape ?? "rectangle"
+  const firstWidth = firstNode.width ?? SHAPE_DEFAULTS[firstShape].width
+  const firstHeight = firstNode.height ?? SHAPE_DEFAULTS[firstShape].height
+
+  let minX = firstNode.position.x
+  let minY = firstNode.position.y
+  let maxX = firstNode.position.x + firstWidth
+  let maxY = firstNode.position.y + firstHeight
+
+  for (const node of restNodes) {
+    const shape = node.data.shape ?? "rectangle"
+    const width = node.width ?? SHAPE_DEFAULTS[shape].width
+    const height = node.height ?? SHAPE_DEFAULTS[shape].height
+    const nodeMinX = node.position.x
+    const nodeMinY = node.position.y
+    const nodeMaxX = node.position.x + width
+    const nodeMaxY = node.position.y + height
+
+    minX = Math.min(minX, nodeMinX)
+    minY = Math.min(minY, nodeMinY)
+    maxX = Math.max(maxX, nodeMaxX)
+    maxY = Math.max(maxY, nodeMaxY)
+  }
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: Math.max(maxX - minX, 1),
+    height: Math.max(maxY - minY, 1),
+  }
+}

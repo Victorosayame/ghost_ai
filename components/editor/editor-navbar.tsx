@@ -26,6 +26,7 @@ export function EditorNavbar({
   isAiSidebarOpen = false,
   onToggleAiSidebar,
   onOpenShareDialog,
+  actions,
 }: EditorNavbarProps) {
   const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen;
 
@@ -57,6 +58,7 @@ export function EditorNavbar({
       )}
 
       <div className="flex items-center justify-end gap-2">
+        {actions}
         {onToggleAiSidebar ? (
           <>
             {onOpenShareDialog ? (

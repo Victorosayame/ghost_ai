@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 12: Shape panel
+- Feature 18: Starter templates
 
 ## Current Goal
 
-- Feature 12 has been implemented and verified.
+- Feature 18 starter template import is implemented and verified.
 
 ## Completed
 
@@ -125,6 +125,56 @@ Update this file whenever the current phase, active feature, or implementation s
   - Tuned the base canvas presentation by preserving a full-viewport dot grid, removing the heavier minimap shadow treatment, and keeping the drop-state overlay flat instead of card-like.
   - Verified `npm.cmd run lint` and `npm.cmd run build`.
   - Verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+- Node shape:
+  - Replaced the temporary `canvasNode` block renderer with proper shape-aware rendering backed by collaborative node data.
+  - Added CSS-rendered rectangle, pill, and circle node variants with subtle rest-state borders and brighter selected-state borders.
+  - Added scalable SVG-rendered diamond, hexagon, and cylinder node variants that preserve the configured node size on the canvas.
+  - Added a cursor-following ghost preview while dragging shapes from the shape panel, reusing the same default size and shape metadata used on drop.
+  - Kept node creation and Liveblocks storage synchronization unchanged while swapping in the new rendering and preview layer.
+  - Verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+- Node editing:
+  - Added shared shape-specific minimum resize dimensions in `types/canvas.ts` so node resizing stays constrained without changing creation defaults.
+  - Added subtle selected-node resize handles through the existing React Flow node change pipeline so width and height updates continue syncing through Liveblocks.
+  - Added inline double-click label editing inside `canvasNode`, including centered placeholder text, textarea overlay editing, live collaborative label updates, and close-on-blur/Escape behavior.
+  - Prevented textarea interactions from triggering canvas drag or pan by marking the editing controls as `nodrag`/`nopan` and stopping pointer event propagation.
+  - Verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+  - Fixed the post-Feature 14 runtime label-editing error where `node.get("data").set` failed on dropped nodes because their nested `data` payload had been stored as a plain object instead of a recursive Liveblocks structure.
+  - Hardened node label mutations to support both legacy rooms with plain-object node data and newly created rooms with recursive `LiveObject` node data, upgrading old nodes during edit.
+  - Updated dropped-node creation to use recursive `LiveObject.from(...)` storage so future collaborative node data matches the expected Liveblocks shape.
+  - Re-verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+  - Fixed inconsistent double-click label editing across shapes by replacing the undersized padding-driven label trigger with a full label-region overlay that uses the shared shape padding for layout instead of sizing the hit target itself.
+  - This resolved the issue where some percentage-padded shapes such as diamond, circle, and hexagon could fail to open the inline textarea because the double-click target collapsed or became too small.
+  - Re-verified `npm.cmd run lint` and `npm.cmd run build` (with network access for `next/font` Google Fonts fetches).
+- Node color toolbar:
+  - Added a selected-node floating color toolbar above each canvas node using the predefined `NODE_COLORS` palette.
+  - Wired swatch selection into the existing Liveblocks node data so background and text colors update together without server calls.
+  - Preserved legacy plain-object node data compatibility by broadening collaborative node mutations from label-only updates to shared node-data patch updates.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Node drag fix:
+  - Removed the full-surface non-editing label overlay that was intercepting `pointerdown` across the entire node and blocking React Flow drag initiation.
+  - Moved label edit activation to the node container `onDoubleClick` path so nodes can be dragged normally while preserving inline editing.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Edge behavior:
+  - Added shared custom edge defaults in `types/canvas.ts` so template edges, existing-room upgrades, and new connections use the same `canvasEdge` type, arrow marker, and empty-label data shape.
+  - Added a dedicated `CanvasEdgeComponent` custom renderer with right-angle `getSmoothStepPath()` routing, dim-at-rest and bright-on-hover/selection styling, and a larger invisible interaction path for easier edge hover and selection without thickening the visible stroke.
+  - Added inline collaborative edge label editing through `EdgeLabelRenderer`, including double-click-to-edit, blur/Enter/Escape save, auto-sizing pill inputs, saved badge labels, and an active-edge empty-label hint.
+  - Updated the React Flow canvas to register the custom edge type, apply default edge options to new connections, and upgrade legacy room edges so missing type, marker, or label data are normalized in Liveblocks storage.
+  - Reused the existing four-side node handles and kept them subtle with hover-only reveal, matching the feature scope without changing node creation or the shape panel.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Canvas ergonomics:
+  - Added a floating pill-shaped control bar at the bottom-left of the canvas above the existing shape panel.
+  - Wired zoom out, fit view, and zoom in actions to the active React Flow instance with short animated transitions.
+  - Removed the bottom-left minimap so the new control bar owns that canvas corner.
+  - Wired undo and redo controls to Liveblocks history through `useUndo`, `useRedo`, `useCanUndo`, and `useCanRedo`, including dimmed disabled states when no history action is available.
+  - Added `hooks/use-keyboard-shortcuts.ts` to handle zoom and history shortcuts on `window` while ignoring inputs, textareas, selects, and editable content.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Starter templates:
+  - Added shared `CanvasTemplate` definitions for curated microservices, CI/CD pipeline, and event-driven system diagrams using the existing shared canvas node and edge types.
+  - Added template cloning and bounds helpers so previews and imports use the same template source data safely.
+  - Added a starter templates dialog with a scrollable grid of template cards, lightweight fixed-viewport diagram previews, and per-template import actions.
+  - Added a workspace navbar `Templates` entry point and wired the modal into the active editor room.
+  - Added a Liveblocks-backed canvas replacement mutation that clears existing room nodes and edges, loads the selected template into collaborative storage, and fits the viewport after import.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
 
 ## In Progress
 
@@ -161,6 +211,17 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-05-21: Reimplemented `11-base-canvas.md` cleanly from the spec. Reset the canvas wrapper and React Flow surface to the required Liveblocks-backed base foundation, retained typed room storage, and fixed the AI sidebar to display as a right-side panel when open. Verified `npm.cmd run lint` and `npm.cmd run build`.
 - 2026-05-21: Updated the editor workspace layout so the AI sidebar is a real right-side panel within the main workspace flex layout instead of a fixed overlay. Verified `npm.cmd run lint` and `npm.cmd run build`.
 - 2026-05-24: Completed `12-shape-panel.md` implementation. Added the bottom drag-to-create shape toolbar, Liveblocks-backed drop node creation, and a temporary custom `canvasNode` renderer. Verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-24: Completed `13-node-shape.md` implementation. Replaced the temporary node renderer with real CSS/SVG node shapes, added a cursor-following drag ghost preview, and verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-24: Fixed shape-to-shape connections. Added the required top/right/bottom/left React Flow handles to the custom `canvasNode` renderer so dropped shapes can create edges while keeping handles hidden until node hover.
+- 2026-05-26: Completed `14-node-editing.md` implementation. Added selected-node resize handles with minimum size constraints, inline collaborative label editing with centered placeholders and textarea overlay controls, and verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Resolved the current node-label editing runtime error from `context/current-issues/current-issue.md`. Fixed mixed Liveblocks/plain-object node `data` handling for dropped nodes, migrated new node creation to recursive `LiveObject.from(...)`, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Fixed inconsistent shape label editing hit areas. Reworked the label double-click overlay so all node shapes expose a stable centered edit target, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Started `15-node-color-toolbar.md` implementation. Added a selected-node floating swatch toolbar and extended collaborative node data mutations so color pairs can update in-place inside Liveblocks.
+- 2026-05-26: Completed `15-node-color-toolbar.md` implementation. Verified selected-node palette updates for both fill and text colors through Liveblocks, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Started node drag fix after the new node overlay regression. Removed the full-node non-editing overlay that was swallowing drag-start pointer events and moved label editing to a container-level double-click handler.
+- 2026-05-26: Completed node drag fix verification. Re-verified `npm.cmd run lint` and `npm.cmd run build` after moving label edit activation off the full-surface overlay.
+- 2026-05-26: Started `16-edge-behavior.md` implementation. Added shared custom edge defaults, registered a dedicated `canvasEdge` renderer, and wired new connections plus legacy edge upgrades to the new collaborative edge shape.
+- 2026-05-26: Completed `16-edge-behavior.md` implementation. Added right-angle custom edge rendering, hover/selection brightening, inline edge label editing through `EdgeLabelRenderer`, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
 - 2026-05-16: Started `07-wire-editor-home.md` implementation.
 - 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `08-editor-workspace-shell.md` implementation. Added server-side access helpers, AccessDenied UI, active project sidebar highlighting, and placeholder workspace shell.

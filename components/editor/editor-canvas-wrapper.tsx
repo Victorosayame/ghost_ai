@@ -11,10 +11,16 @@ import { Component, type ReactNode } from "react";
 import { ReactFlowCanvas } from "./react-flow-canvas";
 
 interface EditorCanvasWrapperProps {
+  isStarterTemplatesOpen: boolean;
+  onStarterTemplatesOpenChange: (open: boolean) => void;
   roomId: string;
 }
 
-export function EditorCanvasWrapper({ roomId }: EditorCanvasWrapperProps) {
+export function EditorCanvasWrapper({
+  isStarterTemplatesOpen,
+  onStarterTemplatesOpenChange,
+  roomId,
+}: EditorCanvasWrapperProps) {
   return (
     <LiveblocksProvider
       authEndpoint={async () => {
@@ -48,7 +54,10 @@ export function EditorCanvasWrapper({ roomId }: EditorCanvasWrapperProps) {
         <CanvasErrorBoundary>
           <ClientSideSuspense fallback={<CanvasLoadingFallback />}>
             <div className="flex h-full w-full flex-1 min-h-0 min-w-0 bg-base">
-              <ReactFlowCanvas />
+              <ReactFlowCanvas
+                isStarterTemplatesOpen={isStarterTemplatesOpen}
+                onStarterTemplatesOpenChange={onStarterTemplatesOpenChange}
+              />
             </div>
           </ClientSideSuspense>
         </CanvasErrorBoundary>

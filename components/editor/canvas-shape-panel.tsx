@@ -20,7 +20,7 @@ const SHAPE_LABELS: Record<NodeShape, string> = {
 };
 
 interface CanvasShapePanelProps {
-  onDragStateChange?: (isDragging: boolean) => void;
+  onDragStateChange?: (payload: ShapeDragPayload | null) => void;
 }
 
 export function CanvasShapePanel({
@@ -39,11 +39,12 @@ export function CanvasShapePanel({
     event.dataTransfer.effectAllowed = "copy";
     event.dataTransfer.setData(SHAPE_PANEL_DRAG_TYPE, serializedPayload);
     event.dataTransfer.setData("text/plain", serializedPayload);
-    onDragStateChange?.(true);
+    event.dataTransfer.setDragImage(getTransparentDragImage(), 0, 0);
+    onDragStateChange?.(payload);
   }
 
   function handleDragEnd() {
-    onDragStateChange?.(false);
+    onDragStateChange?.(null);
   }
 
   return (
@@ -66,6 +67,20 @@ export function CanvasShapePanel({
       </div>
     </div>
   );
+}
+
+let transparentDragImage: HTMLImageElement | null = null;
+
+function getTransparentDragImage() {
+  if (transparentDragImage) {
+    return transparentDragImage;
+  }
+
+  transparentDragImage = new Image();
+  transparentDragImage.src =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+  return transparentDragImage;
 }
 
 function ShapeGlyph({
