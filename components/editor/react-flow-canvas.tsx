@@ -10,6 +10,8 @@ import {
   type FitViewOptions,
   ReactFlow,
   ReactFlowProvider,
+  useEdges,
+  useNodes,
   useReactFlow,
 } from "@xyflow/react";
 import {
@@ -17,11 +19,13 @@ import {
   type LiveblocksNode,
   useLiveblocksFlow,
 } from "@liveblocks/react-flow";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { Redo2, Search, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
+import { CanvasPresence } from "./canvas-presence";
 import { CanvasNodeComponent } from "./canvas-node";
 import { CanvasEdgeComponent } from "./canvas-edge";
 import { CanvasNodeShape } from "./canvas-node-shape";
@@ -40,6 +44,10 @@ import {
   isNodeShape,
 } from "@/types/canvas";
 import { Button } from "@/components/ui/button";
+import {
+  type CanvasSaveStatus,
+  useCanvasAutosave,
+} from "@/hooks/use-canvas-autosave";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 const fitViewOptions: FitViewOptions = {
@@ -56,18 +64,24 @@ const edgeTypes = {
 
 interface ReactFlowCanvasProps {
   isStarterTemplatesOpen: boolean;
+  onSaveStatusChange?: (status: CanvasSaveStatus) => void;
   onStarterTemplatesOpenChange: (open: boolean) => void;
+  projectId: string;
 }
 
 export function ReactFlowCanvas({
   isStarterTemplatesOpen,
+  onSaveStatusChange,
   onStarterTemplatesOpenChange,
+  projectId,
 }: ReactFlowCanvasProps) {
   return (
     <ReactFlowProvider>
       <ReactFlowCanvasInner
         isStarterTemplatesOpen={isStarterTemplatesOpen}
+        onSaveStatusChange={onSaveStatusChange}
         onStarterTemplatesOpenChange={onStarterTemplatesOpenChange}
+        projectId={projectId}
       />
     </ReactFlowProvider>
   );
@@ -75,7 +89,9 @@ export function ReactFlowCanvas({
 
 function ReactFlowCanvasInner({
   isStarterTemplatesOpen,
+  onSaveStatusChange,
   onStarterTemplatesOpenChange,
+  projectId,
 }: ReactFlowCanvasProps) {
   const [dragPreviewPayload, setDragPreviewPayload] =
     useState<ShapeDragPayload | null>(null);
@@ -87,6 +103,9 @@ function ReactFlowCanvasInner({
   );
   const nodeCounterRef = useRef(0);
   const reactFlow = useReactFlow<CanvasNode, CanvasEdge>();
+  const selectedNodes = useNodes<CanvasNode>().filter((node) => node.selected);
+  const selectedEdges = useEdges<CanvasEdge>().filter((edge) => edge.selected);
+  const updateMyPresence = useUpdateMyPresence();
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
@@ -101,6 +120,7 @@ function ReactFlowCanvasInner({
       },
       suspense: true,
     });
+  const saveStatus = useCanvasAutosave(projectId, nodes, edges);
   const addNode = useMutation(({ storage }, node: CanvasNode) => {
     const flow = storage.get("flow");
 
@@ -193,6 +213,10 @@ function ReactFlowCanvasInner({
   }, []);
 
   useEffect(() => {
+    onSaveStatusChange?.(saveStatus);
+  }, [onSaveStatusChange, saveStatus]);
+
+  useEffect(() => {
     if (!dragPreviewPayload) {
       return;
     }
@@ -239,6 +263,31 @@ function ReactFlowCanvasInner({
 
     return () => window.cancelAnimationFrame(frameId);
   }, [nodes, pendingTemplateFitId, reactFlow]);
+
+  useEffect(() => {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Delete" && event.key !== "Backspace") {
+        return;
+      }
+
+      if (isEditableKeyTarget(event.target)) {
+        return;
+      }
+
+      if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      onDelete({ nodes: selectedNodes, edges: selectedEdges });
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onDelete, selectedEdges, selectedNodes]);
 
   useEffect(() => {
     for (const edge of edges) {
@@ -357,6 +406,21 @@ function ReactFlowCanvasInner({
     setPendingTemplateFitId(template.id);
   }
 
+  function handlePaneMouseMove(event: React.MouseEvent) {
+    updateMyPresence({
+      cursor: reactFlow.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      }),
+    });
+  }
+
+  function handlePaneMouseLeave() {
+    updateMyPresence({
+      cursor: null,
+    });
+  }
+
   return (
     <div className="relative flex h-full w-full flex-1 min-h-0 min-w-0 overflow-hidden bg-base">
       <ReactFlow
@@ -368,7 +432,10 @@ function ReactFlowCanvasInner({
         onDelete={onDelete}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
+        onPaneMouseLeave={handlePaneMouseLeave}
+        onPaneMouseMove={handlePaneMouseMove}
         connectionMode={ConnectionMode.Loose}
+        deleteKeyCode={null}
         fitView
         fitViewOptions={fitViewOptions}
         nodeTypes={nodeTypes}
@@ -391,6 +458,7 @@ function ReactFlowCanvasInner({
           variant={BackgroundVariant.Dots}
         />
       </ReactFlow>
+      <CanvasPresence />
       <div className="pointer-events-none absolute bottom-24 left-5 z-10 flex">
         <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-surface-border bg-surface/90 p-2 shadow-lg backdrop-blur-md">
           <CanvasControlButton
@@ -487,4 +555,12 @@ function CanvasControlButton({
       {icon}
     </Button>
   );
+}
+
+function isEditableKeyTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest("input, textarea") || target.isContentEditable);
 }

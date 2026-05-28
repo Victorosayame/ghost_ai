@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 18: Starter templates
+- Current issue: Delete selected canvas items
 
 ## Current Goal
 
-- Feature 18 starter template import is implemented and verified.
+- Selected canvas nodes and edges can be deleted with Delete or Backspace through Liveblocks collaborative state.
 
 ## Completed
 
@@ -175,6 +175,36 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added a workspace navbar `Templates` entry point and wired the modal into the active editor room.
   - Added a Liveblocks-backed canvas replacement mutation that clears existing room nodes and edges, loads the selected template into collaborative storage, and fits the viewport after import.
   - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Presence avatars and cursors:
+  - Renamed the shared Liveblocks presence flag from `isThinking` to `thinking` and corrected `UserMeta` typing so authenticated user info is available through `other.info`.
+  - Added a room-only canvas presence overlay in the top-right corner of the editor canvas without changing the shared editor home navbar.
+  - Rendered collaborator avatars from the active Liveblocks participants list, excluding the current Clerk user, deduplicating by user ID, limiting the visible stack to five avatars, and showing a `+N` overflow chip when needed.
+  - Rendered the current user separately with the existing Clerk `UserButton`, including conditional divider display only when collaborator avatars are present.
+  - Broadcast cursor positions through Liveblocks on React Flow pane mouse move and clear them on pane leave.
+  - Added colored live cursor rendering for other participants only, with pointer markers and attached name badges mapped to each participant's Liveblocks color.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- AI sidebar shell:
+  - Reworked `components/editor/ai-sidebar.tsx` from a placeholder into a dedicated floating AI workspace panel while preserving the parent-controlled open state and right-side slide animation.
+  - Added a token-styled header, shadcn Tabs layout, AI Architect empty/chat states, starter prompt chips, autosizing textarea composer, and Enter-to-send behavior with local demo messages only.
+  - Added a Specs tab with a generate button, static demo spec card, and disabled download action for the current UI-only scope.
+  - Kept the workspace shell rendering the sidebar component while letting the sidebar animate closed instead of unmounting immediately.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Canvas autosave:
+  - Installed `@vercel/blob`.
+  - Reused the existing `Project.canvasJsonPath` field for the saved canvas blob URL, keeping Prisma responsible for metadata only.
+  - Added `GET` and `PUT` canvas routes at `/api/projects/[projectId]/canvas` with authenticated project access checks.
+  - Added Vercel Blob canvas JSON uploads under `canvas/{projectId}.json` and persisted the returned blob URL on the matching Prisma project.
+  - Added shared canvas snapshot validation for save and load route payloads.
+  - Added `hooks/use-canvas-autosave.ts` to load a saved snapshot only when the Liveblocks room is empty, debounce canvas saves, and track `saving`, `saved`, and `error` states.
+  - Wired autosave into the Liveblocks-backed React Flow canvas without overwriting active collaborative rooms that already contain nodes or edges.
+  - Added a compact navbar save status indicator for the editor workspace.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Delete selected canvas items:
+  - Added Delete and Backspace handling for selected canvas nodes and edges in the Liveblocks-backed React Flow canvas.
+  - Guarded deletion so keyboard events from inputs, textareas, and contenteditable elements are ignored.
+  - Deleted selected items through the existing `useLiveblocksFlow()` `onDelete` helper and disabled React Flow's built-in keyboard deletion behavior.
+  - Corrected the first deletion implementation after it bypassed the autosave-friendly Liveblocks React Flow deletion helper.
+  - Verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
 
 ## In Progress
 
@@ -182,7 +212,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Next feature spec.
+- Move to the next feature spec.
 
 ## Open Questions
 
@@ -222,6 +252,13 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-05-26: Completed node drag fix verification. Re-verified `npm.cmd run lint` and `npm.cmd run build` after moving label edit activation off the full-surface overlay.
 - 2026-05-26: Started `16-edge-behavior.md` implementation. Added shared custom edge defaults, registered a dedicated `canvasEdge` renderer, and wired new connections plus legacy edge upgrades to the new collaborative edge shape.
 - 2026-05-26: Completed `16-edge-behavior.md` implementation. Added right-angle custom edge rendering, hover/selection brightening, inline edge label editing through `EdgeLabelRenderer`, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Completed `19-presence-avatars-cursors.md` implementation. Added a room-only top-right presence overlay with collaborator avatars plus the existing Clerk `UserButton`, renamed Liveblocks presence `isThinking` to `thinking`, broadcast cursor movement from the React Flow pane, and rendered colored live cursors for other participants only. Re-verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-26: Started `20-ai-sidebar-shell.md` implementation. Replaced the AI placeholder body with a dedicated tabbed sidebar UI, local demo chat interactions, and a static specs panel while preserving the parent-controlled floating shell behavior.
+- 2026-05-26: Completed `20-ai-sidebar-shell.md` implementation. Verified `npm.cmd run lint` and `npm.cmd run build` after wiring the floating AI Workspace tabs, composer, and demo specs card.
+- 2026-05-28: Completed `21-canvas-autosave.md` implementation. Installed `@vercel/blob`, added canvas save/load routes backed by Vercel Blob plus `Project.canvasJsonPath`, wired debounced Liveblocks canvas autosave and empty-room snapshot loading, added the editor save status indicator, and verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-28: Reverted the two latest implementation changes on request: the current editor workspace issue fix and the autosave retry behavior change.
+- 2026-05-28: Completed selected canvas item deletion fix from `context/current-issues/current-issue.md`. Added Delete/Backspace handling using selected React Flow nodes and edges with Liveblocks storage deletion, disabled React Flow keyboard deletion, and verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
+- 2026-05-28: Corrected selected canvas item deletion to call the existing `useLiveblocksFlow()` `onDelete` helper instead of directly deleting from Liveblocks storage maps, preserving the autosave-friendly React Flow/Liveblocks mutation path. Re-verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
 - 2026-05-16: Started `07-wire-editor-home.md` implementation.
 - 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `08-editor-workspace-shell.md` implementation. Added server-side access helpers, AccessDenied UI, active project sidebar highlighting, and placeholder workspace shell.

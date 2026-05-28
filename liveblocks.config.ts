@@ -9,7 +9,7 @@ declare global {
     // Each user's Presence, for useMyPresence, useOthers, etc.
     Presence: {
       cursor: { x: number; y: number } | null;
-      isThinking: boolean;
+      thinking: boolean;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
@@ -20,9 +20,11 @@ declare global {
     // Custom user info set when authenticating with a secret key
     UserMeta: {
       id: string;
-      name: string;
-      avatar: string;
-      color: string;
+      info: {
+        name: string;
+        avatar: string;
+        color: string;
+      };
     };
 
     // Custom events, for useBroadcastEvent, useEventListener

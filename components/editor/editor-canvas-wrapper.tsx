@@ -9,16 +9,21 @@ import {
 import { Component, type ReactNode } from "react";
 
 import { ReactFlowCanvas } from "./react-flow-canvas";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 
 interface EditorCanvasWrapperProps {
   isStarterTemplatesOpen: boolean;
+  onSaveStatusChange?: (status: CanvasSaveStatus) => void;
   onStarterTemplatesOpenChange: (open: boolean) => void;
+  projectId: string;
   roomId: string;
 }
 
 export function EditorCanvasWrapper({
   isStarterTemplatesOpen,
+  onSaveStatusChange,
   onStarterTemplatesOpenChange,
+  projectId,
   roomId,
 }: EditorCanvasWrapperProps) {
   return (
@@ -43,7 +48,7 @@ export function EditorCanvasWrapper({
     >
       <RoomProvider
         id={roomId}
-        initialPresence={{ cursor: null, isThinking: false }}
+        initialPresence={{ cursor: null, thinking: false }}
         initialStorage={{
           flow: new LiveObject({
             nodes: new LiveMap(),
@@ -56,7 +61,9 @@ export function EditorCanvasWrapper({
             <div className="flex h-full w-full flex-1 min-h-0 min-w-0 bg-base">
               <ReactFlowCanvas
                 isStarterTemplatesOpen={isStarterTemplatesOpen}
+                onSaveStatusChange={onSaveStatusChange}
                 onStarterTemplatesOpenChange={onStarterTemplatesOpenChange}
+                projectId={projectId}
               />
             </div>
           </ClientSideSuspense>

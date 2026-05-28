@@ -63,6 +63,11 @@ export interface CanvasEdgeData extends Record<string, unknown> {
   label?: string
 }
 
+export interface CanvasSnapshot {
+  edges: CanvasEdge[]
+  nodes: CanvasNode[]
+}
+
 export const CANVAS_EDGE_TYPE = "canvasEdge" as const
 
 export const DEFAULT_CANVAS_EDGE_LABEL = ""
