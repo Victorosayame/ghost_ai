@@ -4,14 +4,20 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 18: Starter templates
+- Current issue: Ready for next feature spec
 
 ## Current Goal
 
-- Feature 18 starter template import is implemented and verified.
+- Move to the next backend or canvas feature unit.
 
 ## Completed
 
+- Trigger.dev setup:
+  - Installed `@trigger.dev/sdk`, `@trigger.dev/build`, and the matching `trigger.dev` CLI at version `4.4.6`.
+  - Added `trigger.config.ts` pointing at the root `trigger/` task directory with default retries and max duration.
+  - Added `trigger:dev` and `trigger:deploy` package scripts.
+  - Added starter Ghost AI task stubs for architecture generation and spec generation under `trigger/ghost-ai.ts`.
+  - Ignored Trigger.dev local runtime artifacts via `.trigger`.
 - Design system and UI primitive setup:
   - Installed and configured `shadcn/ui`.
   - Added Button, Card, Dialog, Input, Tabs, Textarea, and ScrollArea primitives.
@@ -175,6 +181,103 @@ Update this file whenever the current phase, active feature, or implementation s
   - Added a workspace navbar `Templates` entry point and wired the modal into the active editor room.
   - Added a Liveblocks-backed canvas replacement mutation that clears existing room nodes and edges, loads the selected template into collaborative storage, and fits the viewport after import.
   - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Presence avatars and cursors:
+  - Renamed the shared Liveblocks presence flag from `isThinking` to `thinking` and corrected `UserMeta` typing so authenticated user info is available through `other.info`.
+  - Added a room-only canvas presence overlay in the top-right corner of the editor canvas without changing the shared editor home navbar.
+  - Rendered collaborator avatars from the active Liveblocks participants list, excluding the current Clerk user, deduplicating by user ID, limiting the visible stack to five avatars, and showing a `+N` overflow chip when needed.
+  - Rendered the current user separately with the existing Clerk `UserButton`, including conditional divider display only when collaborator avatars are present.
+  - Broadcast cursor positions through Liveblocks on React Flow pane mouse move and clear them on pane leave.
+  - Added colored live cursor rendering for other participants only, with pointer markers and attached name badges mapped to each participant's Liveblocks color.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- AI sidebar shell:
+  - Reworked `components/editor/ai-sidebar.tsx` from a placeholder into a dedicated floating AI workspace panel while preserving the parent-controlled open state and right-side slide animation.
+  - Added a token-styled header, shadcn Tabs layout, AI Architect empty/chat states, starter prompt chips, autosizing textarea composer, and Enter-to-send behavior with local demo messages only.
+  - Added a Specs tab with a generate button, static demo spec card, and disabled download action for the current UI-only scope.
+  - Kept the workspace shell rendering the sidebar component while letting the sidebar animate closed instead of unmounting immediately.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Canvas autosave:
+  - Installed `@vercel/blob`.
+  - Reused the existing `Project.canvasJsonPath` field for the saved canvas blob URL, keeping Prisma responsible for metadata only.
+  - Added `GET` and `PUT` canvas routes at `/api/projects/[projectId]/canvas` with authenticated project access checks.
+  - Added Vercel Blob canvas JSON uploads under `canvas/{projectId}.json` and persisted the returned blob URL on the matching Prisma project.
+  - Added shared canvas snapshot validation for save and load route payloads.
+  - Added `hooks/use-canvas-autosave.ts` to load a saved snapshot only when the Liveblocks room is empty, debounce canvas saves, and track `saving`, `saved`, and `error` states.
+  - Wired autosave into the Liveblocks-backed React Flow canvas without overwriting active collaborative rooms that already contain nodes or edges.
+  - Added a compact navbar save status indicator for the editor workspace.
+  - Verified `npm.cmd run lint` and `npm.cmd run build`.
+- Delete selected canvas items:
+  - Added Delete and Backspace handling for selected canvas nodes and edges in the Liveblocks-backed React Flow canvas.
+  - Guarded deletion so keyboard events from inputs, textareas, and contenteditable elements are ignored.
+  - Deleted selected items through the existing `useLiveblocksFlow()` `onDelete` helper and disabled React Flow's built-in keyboard deletion behavior.
+  - Corrected the first deletion implementation after it bypassed the autosave-friendly Liveblocks React Flow deletion helper.
+  - Verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
+- Design agent API:
+  - Added `TaskRun` Prisma tracking with Trigger run ID, project ID, user ID, creation timestamp, ownership indexes, and cascade cleanup with projects.
+  - Added and applied the `20260531120000_add_task_runs` migration.
+  - Added `POST /api/ai/design` to validate prompt/project/room input, verify project access, trigger the `design-agent` Trigger.dev task, persist the run ownership, and return the Trigger run ID.
+  - Added `POST /api/ai/design/token` to validate run ownership and issue a run-scoped Trigger.dev public token.
+  - Added the minimal `trigger/design-agent.ts` task that accepts `prompt` and `roomId` and echoes/logs the payload without AI or canvas mutations.
+  - Allowed `/api/ai` requests through the proxy so route handlers return consistent JSON auth responses.
+  - Ignored `.trigger/**` in ESLint to keep generated Trigger runtime bundles out of source linting.
+  - Verified `npm.cmd exec prisma validate`, `npm.cmd exec prisma generate`, `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Design agent logic:
+  - Replaced the minimal `trigger/design-agent.ts` echo task with a Gemini-backed design planner using `@ai-sdk/google` and structured AI SDK output.
+  - Used `@liveblocks/react-flow/node` `mutateFlow()` to read and update the existing collaborative `flow` storage without introducing a new canvas state system.
+  - Added validated/sanitized support for adding, moving, resizing, updating, and deleting canvas nodes, plus adding and deleting canvas edges.
+  - Enforced existing allowed node shapes, the shared node color palette, shape size constraints, concise labels, and readable canvas coordinate limits before applying AI output.
+  - Added room-wide `AI_STATUS` Liveblocks events for start, processing, complete, and error messages.
+  - Added ephemeral Ghost AI Liveblocks presence with cursor and `thinking` state while the task runs, clearing it when the task finishes or fails.
+  - Fixed the first live Trigger run failure by granting the synthetic `ghost-ai` actor room access before setting ephemeral Liveblocks presence and by using the documented minimum TTL when clearing presence.
+  - Fixed a follow-up design agent runtime crash where Gemini could return an `addNode` action without a usable label by making label and ID sanitization tolerate missing/non-string values and fall back to `Component`.
+  - Added a compact canvas AI status feed that listens to room events so collaborators can see progress updates in real time.
+  - Wired the AI sidebar composer to call `POST /api/ai/design`, show in-flight state, and report the Trigger run ID instead of using local demo replies.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- AI presence state:
+  - Reused the existing Liveblocks `ai-status-feed` hook so the AI sidebar reads the latest validated room-wide status message instead of creating parallel realtime state.
+  - Added a compact sidebar header status indicator for active, completed, and error AI states.
+  - Disabled the AI chat composer and showed a loading send button while either the local request or shared AI status is active.
+  - Updated Liveblocks feed payload and metadata contracts to satisfy the Liveblocks JSON object type while keeping validation in `types/tasks.ts`.
+  - Added `presence.thinking` spinners to collaborator cursor name badges.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Sidebar chat feed:
+  - Added a separate room-scoped Liveblocks `ai-chat` feed alongside the existing `ai-status-feed` without mixing chat messages and AI progress events.
+  - Added Zod-backed chat message validation in `types/tasks.ts` for sender, role, content, and timestamp.
+  - Added `hooks/use-ai-chat-feed.ts` to create/reuse the chat feed, subscribe to validated feed messages, and send user chat messages through Liveblocks.
+  - Rewired the AI sidebar chat area to render real-time feed messages in order with sender, timestamp, and content.
+  - Replaced the sidebar's local demo chat send flow with Liveblocks feed message sending and a compact inline send error state.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Functional AI chat:
+  - Wired the AI sidebar submit flow to send the user message to the collaborative `ai-chat` feed, trigger `POST /api/ai/design`, and subscribe to the returned run with `useRealtimeRun`.
+  - Used the existing run token endpoint as a compatibility fallback when the design route returns only `runId`, while still accepting an inline `publicToken` response.
+  - Disabled the composer while a design run is active and showed the existing spinner send-button loading state.
+  - Added active-run status strip rendering from the latest `ai-status-feed` message above the composer only while the local run is active.
+  - Added collaborative assistant completion/error messages to the `ai-chat` feed after realtime run completion or subscription failure.
+  - Updated chat bubble styling so user messages use the success accent treatment and assistant messages use the dark workspace surface.
+  - Fixed the room-open runtime error by rendering the AI sidebar inside the existing Liveblocks `RoomProvider` boundary while keeping its fixed sidebar positioning.
+  - Returned the Trigger public run token directly from `POST /api/ai/design` and kept the token route as a fallback so normal sends no longer depend on a second authenticated request.
+  - Added explicit same-origin credentials to AI sidebar design requests.
+  - Added deterministic post-plan layout normalization for AI-created nodes to prevent overlapping or bundled shapes.
+  - Required/generated edge labels for AI-created edges so canvas connections are no longer blank when the model omits labels.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Spec generation backend flow:
+  - Added Zod-backed spec generation request, token request, canvas node, canvas edge, and chat history validation helpers.
+  - Added `POST /api/ai/spec` to authenticate the current Clerk user, resolve project access from `roomId`, trigger the `generate-spec` task, persist `TaskRun` ownership, and return the Trigger run ID.
+  - Added `POST /api/ai/spec/token` to issue one-hour Trigger public read tokens only for runs owned by the current user.
+  - Added the `generate-spec` Trigger task with validated payload input, Gemini Markdown generation, Trigger metadata status updates, and plain Markdown task output.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Spec persistence and download:
+  - Added `ProjectSpec` metadata storage with a `Project` relation, Blob `filePath`, and created-at index.
+  - Added and applied the `add_project_specs` Prisma migration, then regenerated the Prisma Client.
+  - Updated the `generate-spec` Trigger task to upload Markdown specs to private Vercel Blob storage and create the linked `ProjectSpec` record after upload succeeds.
+  - Added `GET /api/projects/[projectId]/specs/[specId]/download` with Clerk auth, project access checks, project/spec ownership validation, private Blob retrieval, and Markdown attachment headers.
+  - Verified `npm.cmd exec prisma validate`, `npm.cmd exec prisma generate`, `npm.cmd exec prisma migrate status`, `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- Spec UI integration:
+  - Replaced the static Specs tab demo card with a compact project spec list loaded from project-scoped API metadata.
+  - Added a shadcn Dialog-based Markdown preview that loads spec content through an authenticated project route and clears content when closed.
+  - Added per-spec and modal download actions that use the existing attachment download endpoint.
+  - Added thin project-scoped spec metadata/content GET routes because only the download route existed in the current codebase.
+  - Shared generated spec filename logic between metadata and download responses.
+  - Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
 
 ## In Progress
 
@@ -182,7 +285,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Next feature spec.
+- Move to the next feature spec.
 
 ## Open Questions
 
@@ -222,6 +325,27 @@ Update this file whenever the current phase, active feature, or implementation s
 - 2026-05-26: Completed node drag fix verification. Re-verified `npm.cmd run lint` and `npm.cmd run build` after moving label edit activation off the full-surface overlay.
 - 2026-05-26: Started `16-edge-behavior.md` implementation. Added shared custom edge defaults, registered a dedicated `canvasEdge` renderer, and wired new connections plus legacy edge upgrades to the new collaborative edge shape.
 - 2026-05-26: Completed `16-edge-behavior.md` implementation. Added right-angle custom edge rendering, hover/selection brightening, inline edge label editing through `EdgeLabelRenderer`, and re-verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-26: Completed `19-presence-avatars-cursors.md` implementation. Added a room-only top-right presence overlay with collaborator avatars plus the existing Clerk `UserButton`, renamed Liveblocks presence `isThinking` to `thinking`, broadcast cursor movement from the React Flow pane, and rendered colored live cursors for other participants only. Re-verified `npm.cmd run lint` and `npm.cmd run build`.
+- 2026-05-26: Started `20-ai-sidebar-shell.md` implementation. Replaced the AI placeholder body with a dedicated tabbed sidebar UI, local demo chat interactions, and a static specs panel while preserving the parent-controlled floating shell behavior.
+- 2026-05-26: Completed `20-ai-sidebar-shell.md` implementation. Verified `npm.cmd run lint` and `npm.cmd run build` after wiring the floating AI Workspace tabs, composer, and demo specs card.
+- 2026-05-28: Completed `21-canvas-autosave.md` implementation. Installed `@vercel/blob`, added canvas save/load routes backed by Vercel Blob plus `Project.canvasJsonPath`, wired debounced Liveblocks canvas autosave and empty-room snapshot loading, added the editor save status indicator, and verified `npm.cmd run lint` plus `npm.cmd run build`.
+- 2026-05-28: Reverted the two latest implementation changes on request: the current editor workspace issue fix and the autosave retry behavior change.
+- 2026-05-28: Completed selected canvas item deletion fix from `context/current-issues/current-issue.md`. Added Delete/Backspace handling using selected React Flow nodes and edges with Liveblocks storage deletion, disabled React Flow keyboard deletion, and verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
+- 2026-05-28: Corrected selected canvas item deletion to call the existing `useLiveblocksFlow()` `onDelete` helper instead of directly deleting from Liveblocks storage maps, preserving the autosave-friendly React Flow/Liveblocks mutation path. Re-verified `npm.cmd run lint`, `npm.cmd exec tsc --noEmit`, and `npm.cmd run build`.
+- 2026-05-31: Completed `22-design-agent-api.md` implementation. Added Trigger-backed design API routes, TaskRun Prisma tracking, a minimal `design-agent` task, run-scoped token issuance, applied the database migration, and verified Prisma validation/generation, TypeScript, lint, and production build.
+- 2026-06-02: Completed `23-design-agent-logic.md` implementation. Added Gemini structured design planning, Liveblocks `mutateFlow()` canvas mutations, AI status events, ephemeral Ghost AI presence, canvas status feed UI, and real AI sidebar trigger wiring. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-02: Fixed the design agent Liveblocks presence runtime failure. The task now ensures the `ghost-ai` actor has room write access before calling `setPresence()`, uses a valid cleanup TTL, and keeps cleanup non-fatal. Re-verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-02: Fixed the design agent missing-label runtime failure. `addNode` actions now tolerate missing/non-string labels and sanitize IDs from safe fallback text before mutating Liveblocks flow storage. Re-verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-02: Completed `24-ai-presence-state.md` implementation. Reused the Liveblocks `ai-status-feed` in the sidebar, added shared AI activity composer states, tightened feed JSON typing/validation, and rendered `presence.thinking` spinners in cursor badges. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-06: Completed `25-sidebar-chat-feed.md` implementation. Added the separate Liveblocks `ai-chat` feed, Zod-validated chat message payloads, sidebar subscription/rendering, and Liveblocks-backed message sending. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Completed `26-ai-chat-functional.md` implementation. Wired sidebar prompt submission to the design run API, Trigger realtime run tracking, active status strip, disabled composer state, and collaborative assistant completion/error chat messages. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Fixed Feature 26 room context regression. Moved `AiSidebar` under `EditorCanvasWrapper`'s Liveblocks `RoomProvider` so `useAiStatusFeed()` and `useAiChatFeed()` have room context when opening `/editor/[roomId]`. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Hardened AI chat/design generation after live prompt testing. Inlined the Trigger public token in the design response, added same-origin fetch credentials, normalized AI-added node layout into readable columns, and generated fallback edge labels before Liveblocks mutation. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Reverted the auth redirect preservation implementation on request. Restored Clerk force redirects and auth-page redirect behavior back to `/editor`, removed the safe auth redirect helper, and left the AI chat hardening intact. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Completed `27-spec-generation-flow.md` implementation. Added the spec trigger route, run token route, Zod validation helpers, `TaskRun` ownership tracking, and the `generate-spec` Trigger task that returns Markdown output without artifact storage. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Completed `29-spec-ui-integration.md` implementation. Added Specs tab metadata loading, Markdown preview modal, download actions, and the missing project-scoped spec read routes needed to keep clients away from Blob URLs. Verified TypeScript, lint, and production build.
+- 2026-06-07: Fixed Spec UI integration runtime crash where the dev Prisma singleton could lack the new `projectSpec` delegate. Spec metadata, preview, and download reads now go through project relation queries, and the Prisma singleton refreshes if required delegates are missing. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
+- 2026-06-07: Fixed missing frontend spec generation action after Spec UI integration. Restored a Specs tab `Generate` button that snapshots the current Liveblocks canvas and chat feed, calls `POST /api/ai/spec`, watches the Trigger run, and refreshes the spec list after completion. Updated spec persistence to create specs through the project relation path. Verified `npm.cmd exec tsc --noEmit`, `npm.cmd run lint`, and `npm.cmd run build`.
 - 2026-05-16: Started `07-wire-editor-home.md` implementation.
 - 2026-05-16: Completed `07-wire-editor-home.md` implementation. `npm.cmd run lint` and `npm.cmd run build` passed.
 - 2026-05-16: Started `08-editor-workspace-shell.md` implementation. Added server-side access helpers, AccessDenied UI, active project sidebar highlighting, and placeholder workspace shell.

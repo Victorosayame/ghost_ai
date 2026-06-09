@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutTemplate } from "lucide-react";
+import { CloudCheck, LoaderCircle, LayoutTemplate, TriangleAlert } from "lucide-react";
 
 import { EditorCanvasWrapper } from "@/components/editor/editor-canvas-wrapper";
 import { ProjectDialogs } from "@/components/editor/project-dialogs";
 import type { EditorProject } from "@/components/editor/project-types";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { useProjectActions } from "@/hooks/use-project-actions";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 import { Button } from "@/components/ui/button";
 import { EditorNavbar } from "./editor-navbar";
 import { ProjectSidebar } from "./project-sidebar";
@@ -30,6 +31,7 @@ export function EditorWorkspaceShell({
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [starterTemplatesOpen, setStarterTemplatesOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<CanvasSaveStatus>("saved");
   const actions = useProjectActions({
     activeProjectId: project.id,
   });
@@ -46,36 +48,39 @@ export function EditorWorkspaceShell({
         }
         onOpenShareDialog={() => setShareDialogOpen(true)}
         actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setStarterTemplatesOpen(true)}
-          >
-            <LayoutTemplate className="h-4 w-4" />
-            Templates
-          </Button>
+          <>
+            <SaveStatusButton status={saveStatus} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setStarterTemplatesOpen(true)}
+            >
+              <LayoutTemplate className="h-4 w-4" />
+              Templates
+            </Button>
+          </>
         }
       />
 
       <main className="flex flex-1 overflow-hidden">
         <div className="relative z-0 flex flex-1 items-stretch overflow-hidden">
           <EditorCanvasWrapper
+            projectId={project.id}
             roomId={roomId}
             isStarterTemplatesOpen={starterTemplatesOpen}
+            onSaveStatusChange={setSaveStatus}
             onStarterTemplatesOpenChange={setStarterTemplatesOpen}
-          />
+          >
+            <AiSidebar
+              isOpen={aiSidebarOpen}
+              onClose={() => setAiSidebarOpen(false)}
+              roomId={roomId}
+              projectId={project.id}
+            />
+          </EditorCanvasWrapper>
         </div>
-
-        {aiSidebarOpen && (
-          <AiSidebar
-            isOpen={aiSidebarOpen}
-            onClose={() => setAiSidebarOpen(false)}
-            roomId={roomId}
-            projectId={project.id}
-          />
-        )}
       </main>
 
       <ProjectSidebar
@@ -98,5 +103,38 @@ export function EditorWorkspaceShell({
         projectName={project.name}
       />
     </div>
+  );
+}
+
+function SaveStatusButton({ status }: { status: CanvasSaveStatus }) {
+  const Icon =
+    status === "saving"
+      ? LoaderCircle
+      : status === "error"
+        ? TriangleAlert
+        : CloudCheck;
+  const label =
+    status === "saving"
+      ? "Saving"
+      : status === "error"
+        ? "Save error"
+        : "Saved";
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="gap-2"
+      disabled
+      title={label}
+    >
+      <Icon
+        className={
+          status === "saving" ? "h-4 w-4 animate-spin" : "h-4 w-4"
+        }
+      />
+      {label}
+    </Button>
   );
 }
