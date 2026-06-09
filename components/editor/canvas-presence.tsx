@@ -3,7 +3,7 @@
 import { UserButton, useAuth } from "@clerk/nextjs";
 import { shallow, useOther, useOthersConnectionIds, useOthersMapped } from "@liveblocks/react/suspense";
 import { useStore } from "@xyflow/react";
-import { UserRound } from "lucide-react";
+import { Loader2, UserRound } from "lucide-react";
 import { useMemo } from "react";
 
 interface CollaboratorSummary {
@@ -139,6 +139,7 @@ function CanvasCursor({
       color: other.info.color,
       cursor: other.presence.cursor,
       name: other.info.name,
+      thinking: other.presence.thinking,
       userId: other.id,
     }),
     shallow
@@ -170,9 +171,12 @@ function CanvasCursor({
           }}
         />
         <div
-          className="absolute left-3 top-3 rounded-full px-2 py-1 text-[11px] font-medium leading-none text-white shadow-md"
+          className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-medium leading-none text-white shadow-md"
           style={{ backgroundColor: participant.color }}
         >
+          {participant.thinking ? (
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+          ) : null}
           {participant.name}
         </div>
       </div>

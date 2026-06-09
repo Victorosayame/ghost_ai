@@ -24,7 +24,19 @@ function createPrismaClient(): PrismaClientType {
   return new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function hasCurrentPrismaDelegates(
+  client: PrismaClientType | undefined
+): client is PrismaClientType {
+  if (!client) {
+    return false;
+  }
+
+  return "project" in client && "projectSpec" in client;
+}
+
+export const prisma = hasCurrentPrismaDelegates(globalForPrisma.prisma)
+  ? globalForPrisma.prisma
+  : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

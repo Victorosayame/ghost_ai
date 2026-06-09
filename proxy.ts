@@ -24,6 +24,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const isProjectApiRoute = createRouteMatcher(["/api/projects", "/api/projects(.*)"]);
+const isAiApiRoute = createRouteMatcher(["/api/ai", "/api/ai(.*)"]);
 
 const proxy = clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) {
@@ -36,7 +37,7 @@ const proxy = clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
-  if (isProjectApiRoute(request)) {
+  if (isProjectApiRoute(request) || isAiApiRoute(request)) {
     return NextResponse.next();
   }
 

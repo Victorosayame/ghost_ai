@@ -1,8 +1,10 @@
 "use client";
 
-import { Bot, FileText, SendHorizonal, Sparkles, X } from "lucide-react";
+import { useRealtimeRun } from "@trigger.dev/react-hooks";
+import { Bot, Loader2, SendHorizonal, Sparkles, X } from "lucide-react";
 import {
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -10,10 +12,15 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { SpecsPanel } from "@/components/editor/specs-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useAiChatFeed } from "@/hooks/use-ai-chat-feed";
+import { useAiStatusFeed } from "@/hooks/use-ai-status-feed";
 import { cn } from "@/lib/utils";
+import type { designAgent } from "@/trigger/design-agent";
+import type { AiChatMessage, AiStatusMessage } from "@/types/tasks";
 
 interface AiSidebarProps {
   isOpen: boolean;
@@ -22,26 +29,26 @@ interface AiSidebarProps {
   projectId: string;
 }
 
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-}
-
 const STARTER_PROMPTS = [
   "Design an e-commerce backend",
   "Create a chat app architecture",
   "Build a CI/CD pipeline",
 ] as const;
 
-const DEMO_SPEC_SNIPPET =
-  "Checkout requests route through an API gateway, order service, payment integration, and async fulfillment queue with shared observability.";
-
-const DEMO_ASSISTANT_REPLY =
-  "I can turn that into a shared architecture plan with core services, data stores, integrations, and the first canvas nodes to place.";
-
 const MIN_TEXTAREA_HEIGHT = 72;
 const MAX_TEXTAREA_HEIGHT = 160;
+
+interface ActiveRun {
+  runId: string;
+  publicToken: string;
+}
+
+interface DesignResponseBody {
+  runId?: unknown;
+  publicToken?: unknown;
+  token?: unknown;
+  error?: unknown;
+}
 
 function AiSidebar({
   isOpen,
@@ -50,9 +57,55 @@ function AiSidebar({
   projectId,
 }: AiSidebarProps) {
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [activeRun, setActiveRun] = useState<ActiveRun | null>(null);
+  const handledRunIdsRef = useRef<Set<string>>(new Set());
+  const { isWorking: isSharedAiWorking, latestStatus } = useAiStatusFeed();
+  const {
+    chatMessages,
+    error: chatError,
+    isLoading: isChatLoading,
+    sendAssistantMessage,
+    sendMessage,
+  } = useAiChatFeed();
+  const isRunActive = Boolean(activeRun);
+  const isComposerDisabled = isSending || isRunActive;
   const textareaId = useId();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const finishRun = useCallback(
+    async (runId: string, message: string) => {
+      if (handledRunIdsRef.current.has(runId)) {
+        return;
+      }
+
+      handledRunIdsRef.current.add(runId);
+
+      try {
+        await sendAssistantMessage({ content: message });
+      } catch {
+        // The chat feed hook owns the visible feed error state.
+      } finally {
+        setActiveRun((currentRun) =>
+          currentRun?.runId === runId ? null : currentRun
+        );
+      }
+    },
+    [sendAssistantMessage]
+  );
+
+  const { error: realtimeError } = useRealtimeRun<typeof designAgent>(
+    activeRun?.runId,
+    {
+      accessToken: activeRun?.publicToken,
+      enabled: Boolean(activeRun?.runId && activeRun.publicToken),
+      onComplete: (run, error) => {
+        const message = createFinalRunMessage(run, latestStatus, error);
+
+        void finishRun(run.id, message);
+      },
+    }
+  );
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -71,30 +124,48 @@ function AiSidebar({
     textarea.style.height = `${nextHeight}px`;
   }, [draft]);
 
-  const submitPrompt = () => {
+  const submitPrompt = async () => {
     const trimmedDraft = draft.trim();
 
-    if (!trimmedDraft) {
+    if (!trimmedDraft || isComposerDisabled) {
       return;
     }
 
-    const promptId = `user-${Date.now()}`;
+    setIsSending(true);
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: promptId,
-        role: "user",
-        content: trimmedDraft,
-      },
-      {
-        id: `assistant-${promptId}`,
-        role: "assistant",
-        content: DEMO_ASSISTANT_REPLY,
-      },
-    ]);
-    setDraft("");
+    try {
+      await sendMessage({ content: trimmedDraft });
+      setDraft("");
+      const nextRun = await startDesignRun({
+        prompt: trimmedDraft,
+        projectId,
+        roomId,
+      });
+
+      setActiveRun(nextRun);
+    } catch (error) {
+      try {
+        await sendAssistantMessage({
+          content: `Ghost AI could not start that design run: ${readErrorMessage(error)}`,
+        });
+      } catch {
+        // The chat feed hook owns the visible feed error state.
+      }
+    } finally {
+      setIsSending(false);
+    }
   };
+
+  useEffect(() => {
+    if (!activeRun || !realtimeError) {
+      return;
+    }
+
+    void finishRun(
+      activeRun.runId,
+      `Ghost AI lost the run connection: ${realtimeError.message}`
+    );
+  }, [activeRun, finishRun, realtimeError]);
 
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter" || event.shiftKey) {
@@ -102,7 +173,7 @@ function AiSidebar({
     }
 
     event.preventDefault();
-    submitPrompt();
+    void submitPrompt();
   };
 
   return (
@@ -122,6 +193,11 @@ function AiSidebar({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-copy-primary">AI Workspace</p>
           <p className="text-xs text-copy-muted">Collaborate with Ghost AI</p>
+          <AiHeaderStatus
+            isSending={isSending}
+            isSharedAiWorking={isSharedAiWorking}
+            status={latestStatus}
+          />
         </div>
         <Button
           type="button"
@@ -156,7 +232,12 @@ function AiSidebar({
 
         <TabsContent value="architect" className="mt-4 flex min-h-0 flex-1 flex-col">
           <ScrollArea className="min-h-0 flex-1 pr-1">
-            {messages.length === 0 ? (
+            {isChatLoading ? (
+              <div className="flex min-h-full items-center justify-center gap-2 text-sm text-copy-muted">
+                <Loader2 className="h-4 w-4 animate-spin text-ai-text" />
+                Loading chat...
+              </div>
+            ) : chatMessages.length === 0 ? (
               <div className="flex min-h-full flex-col items-center justify-center px-3 py-8 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-surface-border bg-elevated">
                   <Sparkles className="h-5 w-5 text-ai-text" />
@@ -183,31 +264,18 @@ function AiSidebar({
               </div>
             ) : (
               <div className="space-y-3 py-1">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex",
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[85%] rounded-2xl px-3.5 py-3 text-sm leading-6",
-                        message.role === "user"
-                          ? "border-2 border-brand/50 bg-accent-dim text-copy-primary"
-                          : "border border-surface-border bg-elevated text-ai-text"
-                      )}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
+                {chatMessages.map((message) => (
+                  <AiChatMessageBubble key={message.id} message={message} />
                 ))}
               </div>
             )}
           </ScrollArea>
 
           <div className="mt-4 shrink-0 rounded-2xl border border-surface-border bg-surface/80 p-3">
+            <AiRunStatusStrip
+              isActive={isRunActive}
+              status={latestStatus}
+            />
             <label htmlFor={textareaId} className="sr-only">
               Message Ghost AI
             </label>
@@ -217,9 +285,15 @@ function AiSidebar({
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleComposerKeyDown}
+              disabled={isComposerDisabled}
               placeholder="Describe the system you want Ghost AI to help design..."
               className="min-h-[72px] max-h-[160px] resize-none border-surface-border bg-base text-copy-primary placeholder:text-copy-faint"
             />
+            {chatError ? (
+              <p className="mt-2 text-xs leading-5 text-state-error">
+                {chatError}
+              </p>
+            ) : null}
             <div className="mt-3 flex items-center justify-between gap-3">
               <div className="min-w-0 text-[11px] leading-5 text-copy-faint">
                 <span className="font-mono">Room {roomId}</span>
@@ -228,11 +302,15 @@ function AiSidebar({
               </div>
               <Button
                 type="button"
-                onClick={submitPrompt}
-                disabled={draft.trim().length === 0}
-                className="gap-2 bg-ai text-white hover:bg-ai/85"
+                onClick={() => void submitPrompt()}
+                disabled={draft.trim().length === 0 || isComposerDisabled}
+                className="gap-2 bg-state-success text-base hover:bg-state-success/85 disabled:bg-subtle disabled:text-copy-faint"
               >
-                <SendHorizonal className="h-4 w-4" />
+                {isSending || isRunActive ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SendHorizonal className="h-4 w-4" />
+                )}
                 Send
               </Button>
             </div>
@@ -240,48 +318,258 @@ function AiSidebar({
         </TabsContent>
 
         <TabsContent value="specs" className="mt-4 flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-copy-primary">
-                Technical Specs
-              </p>
-              <p className="text-xs text-copy-muted">
-                Generate and review project documentation.
-              </p>
-            </div>
-            <Button type="button" className="bg-ai text-white hover:bg-ai/85">
-              Generate Spec
-            </Button>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-surface-border bg-elevated p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-base">
-                <FileText className="h-5 w-5 text-ai-text" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-copy-primary">
-                  Checkout Service Architecture.md
-                </p>
-                <p className="mt-1 text-sm leading-6 text-copy-muted">
-                  {DEMO_SPEC_SNIPPET}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3 border-t border-surface-border pt-4">
-              <p className="text-xs text-copy-faint">
-                Demo preview only. Downloads unlock in a later feature.
-              </p>
-              <Button type="button" variant="outline" size="sm" disabled>
-                Download
-              </Button>
-            </div>
-          </div>
+          <SpecsPanel
+            chatMessages={chatMessages}
+            projectId={projectId}
+            roomId={roomId}
+          />
         </TabsContent>
       </Tabs>
     </aside>
   );
+}
+
+function AiRunStatusStrip({
+  isActive,
+  status,
+}: {
+  isActive: boolean;
+  status: AiStatusMessage | null;
+}) {
+  if (!isActive) {
+    return null;
+  }
+
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded-xl border border-state-success/35 bg-base px-3 py-2 text-xs text-copy-secondary">
+      <span
+        className="h-2 w-2 shrink-0 rounded-full bg-state-success shadow-[0_0_0_4px_var(--accent-primary-dim)]"
+        aria-hidden="true"
+      />
+      <span className="min-w-0 flex-1 truncate">
+        {status?.text || "Ghost AI is updating the shared canvas..."}
+      </span>
+    </div>
+  );
+}
+
+function AiHeaderStatus({
+  isSending,
+  isSharedAiWorking,
+  status,
+}: {
+  isSending: boolean;
+  isSharedAiWorking: boolean;
+  status: AiStatusMessage | null;
+}) {
+  const isWorking =
+    isSharedAiWorking ||
+    status?.phase === "start" ||
+    status?.phase === "processing";
+
+  if (!isSending && !isWorking && !status) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2 text-xs text-copy-muted">
+      {isWorking ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-ai-text" />
+      ) : (
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full",
+            status?.level === "error" ? "bg-state-error" : "bg-state-success"
+          )}
+          aria-hidden="true"
+        />
+      )}
+      <span className="truncate">
+        {isSending
+          ? "Sending message..."
+          : status?.text || fallbackStatusText(status)}
+      </span>
+    </div>
+  );
+}
+
+function AiChatMessageBubble({ message }: { message: AiChatMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+      <div
+        className={cn(
+          "max-w-[85%] rounded-2xl px-3.5 py-3 text-sm leading-6",
+          isUser
+            ? "border border-state-success/45 bg-state-success text-base"
+            : "border border-surface-border bg-elevated text-copy-primary"
+        )}
+      >
+        <div
+          className={cn(
+            "mb-1 flex items-center gap-2 text-[11px] leading-4",
+            isUser ? "text-base/70" : "text-copy-muted"
+          )}
+        >
+          <span className="max-w-[9rem] truncate font-medium">
+            {message.sender.name}
+          </span>
+          <span className="text-copy-faint">{formatChatTimestamp(message)}</span>
+        </div>
+        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+      </div>
+    </div>
+  );
+}
+
+function formatChatTimestamp(message: AiChatMessage) {
+  const timestamp = Date.parse(message.timestamp);
+
+  if (Number.isNaN(timestamp)) {
+    return new Date(message.createdAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function fallbackStatusText(status: AiStatusMessage | null) {
+  if (!status) {
+    return "Ghost AI is ready.";
+  }
+
+  if (status.phase === "complete") {
+    return "Ghost AI finished updating the canvas.";
+  }
+
+  if (status.phase === "error") {
+    return "Ghost AI could not finish the current update.";
+  }
+
+  return "Ghost AI is working in this room.";
+}
+
+async function startDesignRun({
+  prompt,
+  projectId,
+  roomId,
+}: {
+  prompt: string;
+  projectId: string;
+  roomId: string;
+}): Promise<ActiveRun> {
+  const designResponse = await postJson<DesignResponseBody>("/api/ai/design", {
+    prompt,
+    projectId,
+    roomId,
+  });
+  const runId = readString(designResponse.runId);
+
+  if (!runId) {
+    throw new Error("Design API did not return a run ID.");
+  }
+
+  const inlineToken =
+    readString(designResponse.publicToken) || readString(designResponse.token);
+
+  if (inlineToken) {
+    return { runId, publicToken: inlineToken };
+  }
+
+  const tokenResponse = await postJson<DesignResponseBody>(
+    "/api/ai/design/token",
+    { runId }
+  );
+  const publicToken =
+    readString(tokenResponse.publicToken) || readString(tokenResponse.token);
+
+  if (!publicToken) {
+    throw new Error("Design API did not return a public run token.");
+  }
+
+  return { runId, publicToken };
+}
+
+async function postJson<TResponse>(
+  url: string,
+  body: Record<string, string>
+): Promise<TResponse> {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => null)) as TResponse | null;
+
+  if (!response.ok) {
+    const errorMessage =
+      data && typeof data === "object" && "error" in data
+        ? readString((data as DesignResponseBody).error)
+        : "";
+
+    throw new Error(errorMessage || "Ghost AI request failed.");
+  }
+
+  if (!data) {
+    throw new Error("Ghost AI returned an empty response.");
+  }
+
+  return data;
+}
+
+function createFinalRunMessage(
+  run: NonNullable<ReturnType<typeof useRealtimeRun<typeof designAgent>>["run"]>,
+  status: AiStatusMessage | null,
+  error?: Error
+) {
+  if (error) {
+    return `Ghost AI could not finish the design run: ${error.message}`;
+  }
+
+  if (run.isSuccess) {
+    const output = run.output;
+    const summary =
+      output && typeof output === "object" && "summary" in output
+        ? readString(output.summary)
+        : "";
+
+    return summary
+      ? `Done. ${summary}`
+      : status?.text || "Done. Ghost AI updated the shared canvas.";
+  }
+
+  const runErrorMessage = run.error?.message || status?.text;
+
+  return runErrorMessage
+    ? `Ghost AI could not finish the design run: ${runErrorMessage}`
+    : `Ghost AI finished with status ${run.status}.`;
+}
+
+function readString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : "";
+}
+
+function readErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error.trim();
+  }
+
+  return "Please try again.";
 }
 
 export default AiSidebar;

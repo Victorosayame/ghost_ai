@@ -12,6 +12,7 @@ import { ReactFlowCanvas } from "./react-flow-canvas";
 import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 
 interface EditorCanvasWrapperProps {
+  children?: ReactNode;
   isStarterTemplatesOpen: boolean;
   onSaveStatusChange?: (status: CanvasSaveStatus) => void;
   onStarterTemplatesOpenChange: (open: boolean) => void;
@@ -20,6 +21,7 @@ interface EditorCanvasWrapperProps {
 }
 
 export function EditorCanvasWrapper({
+  children,
   isStarterTemplatesOpen,
   onSaveStatusChange,
   onStarterTemplatesOpenChange,
@@ -65,6 +67,7 @@ export function EditorCanvasWrapper({
                 onStarterTemplatesOpenChange={onStarterTemplatesOpenChange}
                 projectId={projectId}
               />
+              {children}
             </div>
           </ClientSideSuspense>
         </CanvasErrorBoundary>

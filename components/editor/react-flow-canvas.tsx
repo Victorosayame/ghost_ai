@@ -26,6 +26,7 @@ import { useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { CanvasPresence } from "./canvas-presence";
+import { AiStatusFeed } from "./ai-status-feed";
 import { CanvasNodeComponent } from "./canvas-node";
 import { CanvasEdgeComponent } from "./canvas-edge";
 import { CanvasNodeShape } from "./canvas-node-shape";
@@ -458,6 +459,7 @@ function ReactFlowCanvasInner({
           variant={BackgroundVariant.Dots}
         />
       </ReactFlow>
+      <AiStatusFeed />
       <CanvasPresence />
       <div className="pointer-events-none absolute bottom-24 left-5 z-10 flex">
         <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-surface-border bg-surface/90 p-2 shadow-lg backdrop-blur-md">

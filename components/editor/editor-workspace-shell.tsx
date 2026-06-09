@@ -72,15 +72,15 @@ export function EditorWorkspaceShell({
             isStarterTemplatesOpen={starterTemplatesOpen}
             onSaveStatusChange={setSaveStatus}
             onStarterTemplatesOpenChange={setStarterTemplatesOpen}
-          />
+          >
+            <AiSidebar
+              isOpen={aiSidebarOpen}
+              onClose={() => setAiSidebarOpen(false)}
+              roomId={roomId}
+              projectId={project.id}
+            />
+          </EditorCanvasWrapper>
         </div>
-
-        <AiSidebar
-          isOpen={aiSidebarOpen}
-          onClose={() => setAiSidebarOpen(false)}
-          roomId={roomId}
-          projectId={project.id}
-        />
       </main>
 
       <ProjectSidebar
